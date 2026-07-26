@@ -5,10 +5,12 @@ import typer
 from redis import Redis
 from sqlalchemy import inspect, select, text
 
+from ariadne.core.catalog.credits import CreditsStats, ingest_credits_for_upload
 from ariadne.core.catalog.fixtures import FIXTURE_DIR, capture_all
 from ariadne.core.catalog.pipeline import ResolveStats, resolve_upload
 from ariadne.core.catalog.tmdb import TmdbAuthError, TmdbClient, TmdbError
 from ariadne.core.evaluation.audit import read_verdicts, sample_cases, write_review_file
+from ariadne.core.evaluation.coverage import build_coverage, pooled_regions, role_order
 from ariadne.core.evaluation.level1 import build_report, upload_by_token
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
@@ -362,6 +364,102 @@ def audit_report(
         typer.echo("UNSURE")
         for label, method, note in result.unsure_cases:
             typer.echo(f"  [{method}] {label}  —  {note}")
+
+
+@app.command("credits")
+def credits_command(
+    token: str = typer.Argument(..., help="Upload token"),
+    limit: int | None = typer.Option(None, "--limit", help="Only the first N films"),
+    refresh: bool = typer.Option(
+        False, "--refresh", help="Refetch films that already have credits"
+    ),
+) -> None:
+    """Fetch crew credits for every resolved film on an upload."""
+    client = TmdbClient()
+
+    def progress(done: int, total: int, stats: CreditsStats) -> None:
+        if done % 100 == 0 or done == total:
+            typer.echo(
+                f"  {done}/{total}  fetched {stats.fetched}  cached {stats.skipped_cached}  "
+                f"credits {stats.credits_stored}"
+            )
+
+    started = time.perf_counter()
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        stats = ingest_credits_for_upload(
+            session, client, upload.id, limit=limit, on_progress=progress, refresh=refresh
+        )
+    elapsed = time.perf_counter() - started
+
+    typer.echo("")
+    typer.echo(f"films               {stats.films}")
+    typer.echo(f"fetched             {stats.fetched}")
+    typer.echo(f"already had credits {stats.skipped_cached}")
+    if stats.missing:
+        typer.echo(f"missing on tmdb     {stats.missing}")
+    if stats.errors:
+        typer.echo(f"errors              {stats.errors}")
+    typer.echo("")
+    typer.echo(f"credits stored      {stats.credits_stored}")
+    typer.echo(f"people seen         {stats.people_stored}")
+    typer.echo(f"median crew / film  {stats.median_crew:.0f}")
+    typer.echo(f"requests            {client.request_count} ({client.retry_count} retried)")
+    typer.echo(f"elapsed             {elapsed:.1f}s")
+
+
+@app.command("coverage")
+def coverage(token: str = typer.Argument(..., help="Upload token")) -> None:
+    """Crew coverage per role, by decade and region."""
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        report = build_coverage(session, upload.id)
+
+    roles = role_order()
+
+    typer.echo("CATALOG")
+    typer.echo(f"  films                 {report.films}")
+    typer.echo(f"  with any credit       {report.films_with_any_credit}")
+    typer.echo(f"  credits               {report.credits}")
+    typer.echo(f"  distinct people       {report.people}")
+    typer.echo(f"  median crew / film    {report.median_crew:.0f}")
+
+    typer.echo("")
+    typer.echo("ROLE COVERAGE  <- the number that decides how much of the product is possible")
+    for role in roles:
+        rate = report.role_rate(role)
+        bar = "#" * round(rate * 40)
+        multi = report.multi_credit_films[role]
+        typer.echo(
+            f"  {role:<20} {report.by_role[role]:>5}  {rate * 100:5.1f}%  {bar:<40}"
+            f"  {multi} films with >1"
+        )
+
+    typer.echo("")
+    typer.echo("BY DECADE")
+    header = "  decade  films  " + "".join(f"{r[:6]:>8}" for r in roles)
+    typer.echo(header)
+    for decade in sorted(report.decade_films):
+        films = report.decade_films[decade]
+        cells = "".join(f"{report.by_decade[decade][r] / films * 100:7.0f}%" for r in roles)
+        typer.echo(f"  {decade:<7} {films:>5}  {cells}")
+
+    typer.echo("")
+    typer.echo("BY REGION")
+    named, pooled = pooled_regions(report)
+    typer.echo("  region  films  " + "".join(f"{r[:6]:>8}" for r in roles))
+    for region in named:
+        films = report.region_films[region]
+        cells = "".join(f"{report.by_region[region][r] / films * 100:7.0f}%" for r in roles)
+        typer.echo(f"  {region:<7} {films:>5}  {cells}")
+    if pooled:
+        typer.echo(f"  (pooled: {pooled} films in regions with fewer than 15)")
 
 
 if __name__ == "__main__":

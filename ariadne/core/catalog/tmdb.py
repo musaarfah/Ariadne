@@ -109,8 +109,16 @@ class TmdbClient:
         results = payload.get("results", [])
         return results if isinstance(results, list) else []
 
-    def get_movie(self, tmdb_id: int) -> dict[str, Any]:
-        return self._get(f"/movie/{tmdb_id}", {})
+    def get_movie(self, tmdb_id: int, append: str | None = None) -> dict[str, Any]:
+        """Film detail, optionally with sub-resources folded into the same response.
+
+        `append="credits"` halves the request count for the credits pass: 1,297 calls instead
+        of 2,594, and detail is needed anyway because search results omit origin_country.
+        """
+        params: dict[str, Any] = {}
+        if append:
+            params["append_to_response"] = append
+        return self._get(f"/movie/{tmdb_id}", params)
 
     def get_credits(self, tmdb_id: int) -> dict[str, Any]:
         """Full cast and crew, every department.
