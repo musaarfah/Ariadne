@@ -567,3 +567,87 @@ miniseries, converting a correct television call into a wrong film match. Three 
 0.23%; trading audited 100% precision for that is a bad exchange. Precision protects every downstream
 metric, recall costs three rows.
 **Status.** Active, revisit at 1.5.
+
+---
+
+## Phase: credits — 2026-07-26
+
+### D59 — One request per film, using `append_to_response=credits`
+**Context.** Credits and detail were going to be two calls per film, 2,594 in total.
+**Decision.** `/movie/{id}?append_to_response=credits`.
+**Why.** Halves the request count, and detail is needed regardless because search results omit
+`origin_country` — the field F29 identified as blocking the region coverage metric. One call now fills
+in country, refreshes vote counts, and returns the full crew.
+**Status.** Active.
+
+### D60 — Role whitelists are exact job strings, guarded by department
+**Context.** TMDB's Editing department on *The Godfather* holds two `Editor`, five `Assistant Editor`
+and two `Additional Editor`. Its Camera department holds one `Director of Photography` alongside
+`Camera Operator`, `Still Photographer` and `Assistant Camera`.
+**Decision.** Each modelled role whitelists exact job strings and requires a matching department.
+**Alternatives.** Substring matching on "editor", "photography", "music".
+**Why.** Loose matching would put five assistant editors into the taste model alongside the one person
+whose choices shaped the cut, diluting the very effect being measured. The department guard stops a
+`Music` credit filed under Production from reading as a composer.
+**Status.** Active.
+
+### D61 — Source-material credits are excluded from `writer`
+**Decision.** `Screenplay`, `Writer` and `Screenwriter` count. `Novel`, `Book`, `Story` and
+`Story Editor` do not.
+**Why.** A novelist credited on an adaptation did not work on the film. Ariadne is about
+collaborators, and treating Mario Puzo's novel credit as a below-the-line contribution would be a
+category error.
+**Status.** Active. Worth revisiting only if the writer role turns out to be uselessly sparse.
+
+### D62 — Credits ingestion is resumable by default
+**Decision.** Films already holding credits are skipped unless `--refresh` is passed.
+**Why.** 1,297 sequential requests will be interrupted sooner or later, and re-fetching what is
+already stored spends rate budget for nothing. Same reasoning as `--retry-failed` on resolution.
+**Status.** Active.
+
+### D63 — Count films where a role has more than one credited person
+**Context.** *The Godfather* credits two editors.
+**Decision.** Coverage reports, per role, how many films credit more than one person in it.
+**Why.** The model has to decide whether to split the effect, attribute to both, or take the first,
+and that decision needs to be informed by how often the case arises rather than assumed away.
+**Status.** Active. Feeds the 1.6/1.7 design.
+
+### D64 — "Top-10 per role" is downgraded to "top-N, and N may be very small"
+**Context.** F35 — measured sparsity. At a threshold of ≥8 films the estimable population is 11–46
+people per role, matching the §6 projection. At ≥12 it collapses to **1–4 people for four of the six
+roles** (cinematographer 1, production designer 1, director 2, editor 3, writer 4). Composer is the
+sole exception at 29.
+**Decision.** The product promises a top-N per role where N varies by role and may be a single name or
+none. The insufficient-data bucket is a primary surface, not a footnote.
+**Why.** Which regime applies is decided by the 1.7 detection floor, which is not yet measured — and F4
+makes a floor above 8 plausible, since 71.9% of ratings are whole stars and 222 films sit unordered at
+5.0. Promising a top-10 before knowing the floor would be committing to a product the data may not
+support.
+**Status.** Active. Revisit once 1.7 measures the floor.
+
+### D65 — Estimation and traversal separation is now load-bearing
+**Context.** F36 — people with ≥8 films account for 6–14% of credits per role (composer 37%).
+**Decision.** Effects are estimated for the well-sampled few; recommendations traverse the whole graph
+of 77,037 people.
+**Why.** This was recorded as a cheap-now, annoying-later precaution in §6. The measurement shows it is
+the difference between a recommender that can reach ~10% of the library and one that can reach all of
+it.
+**Status.** Active, and promoted from precaution to requirement.
+
+### D66 — Drop the era-coverage caveat for four roles; keep it for production design
+**Context.** F5 predicted coverage would be worst pre-1980. F33 measured the opposite: the 1970s show
+100% editor and 100% cinematographer coverage.
+**Decision.** Stop caveating editor, cinematographer, composer and writer on era. Keep the caveat for
+production design, which really does degrade with age (17% in the 1940s).
+**Why.** The prediction was wrong and carrying a false caveat costs credibility.
+**Note.** D16 — scoping claims to post-2000 cinema — is unaffected: it rests on the rating
+distribution, not on coverage.
+**Status.** Active.
+
+### D67 — Report production design's coverage next to its results
+**Context.** F34 — 79.6% overall but **49% for the 308 Indian films**, a quarter of this library.
+**Decision.** Keep the role, and never present its results without its coverage figure and the regional
+shortfall.
+**Why.** A 49%-covered role sitting beside a 96%-covered one, unmarked, implies a confidence that does
+not exist.
+**Status.** Active.
