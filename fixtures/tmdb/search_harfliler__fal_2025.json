@@ -1,0 +1,26 @@
+{
+  "query": "Üç Harfliler: Fal",
+  "year": 2025,
+  "note": "Turkish, obscure, very recent",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        27
+      ],
+      "id": 1432726,
+      "title": "Üç Harfliler: Fal",
+      "original_language": "tr",
+      "original_title": "Üç Harfliler: Fal",
+      "overview": "After graduating from university, İrem returns to her family home in the countryside, unprepared to face dark secrets. This house is home not only to her bedridden mother, her withdrawn father, and her cousins Nida and Esma, with whom she grew up, but also to buried pain and old fears fed by silence. On the night of Irem’s return, the sudden death of her grandmother Mukaddes triggers unexplained oddities in the house. Though the young women attribute their unease to Mukaddes’s death and the haunting of three-lettered beings, the walls of the house whisper of a darker truth.",
+      "popularity": 1.3891,
+      "poster_path": "/vjZ2guSrGKbqlxcRnrLP3gUBbqo.jpg",
+      "release_date": "2025-03-28",
+      "softcore": false,
+      "video": false,
+      "vote_average": 1.0,
+      "vote_count": 1
+    }
+  ]
+}

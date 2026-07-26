@@ -1,0 +1,66 @@
+{
+  "query": "Star Wars: Episode III – Revenge of the Sith",
+  "year": 2005,
+  "note": "en dash + no-break space",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/jniabJVBSW3EqLlyhjxWCZjVkiE.jpg",
+      "genre_ids": [
+        12,
+        28,
+        878
+      ],
+      "id": 1895,
+      "title": "Star Wars: Episode III - Revenge of the Sith",
+      "original_language": "en",
+      "original_title": "Star Wars: Episode III - Revenge of the Sith",
+      "overview": "When the sinister Sith unveil a thousand-year-old plot to rule the galaxy, the Republic crumbles and from its ashes rises the evil Galactic Empire. Jedi hero Anakin Skywalker must choose a side.",
+      "popularity": 15.1241,
+      "poster_path": "/xfSAoBEm9MNBjmlNcDYLvLSMlnq.jpg",
+      "release_date": "2005-05-17",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.472,
+      "vote_count": 15089
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99
+      ],
+      "id": 721334,
+      "title": "Star Wars: Episode III - Making the Game",
+      "original_language": "en",
+      "original_title": "Star Wars: Episode III - Making the Game",
+      "overview": "After you witness the stunning Jedi action in Episode III, you can experience it yourself in the Star Wars: Episode III video game. Discover how game developers at LucasArts worked closely on set and behind the scenes with George Lucas, cast and crew to create the most authentic Jedi experience ever. With the collaboration of Lucas, stunt coordinator Nick Gillard, and Hayden Christensen, Episode III is the first game that truly gives you all the powers of a Jedi Knight.",
+      "popularity": 0.1449,
+      "poster_path": "/rMRHRdPFzLXBDnSL2RsdnuQqoYn.jpg",
+      "release_date": "2005-05-04",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.0,
+      "vote_count": 3
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/y2gI2EpfZ1Cczz8GoVxVaYgz0mM.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 72513,
+      "title": "Within a Minute: The Making of Star Wars Episode III",
+      "original_language": "en",
+      "original_title": "Within a Minute: The Making of Star Wars Episode III",
+      "overview": "This documentary offers a glimpse into all the people, departments, and work that went into creating the film, specifically, the fight between Anakin Skywalker and Obi-Wan Kenobi. Featured on the 2-Disc DVD for Star Wars: Episode III - Revenge of the Sith.",
+      "popularity": 1.3009,
+      "poster_path": "/zkestj3NdEps5exfuNDHnvd0hgA.jpg",
+      "release_date": "2005-11-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.2,
+      "vote_count": 19
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "query": "Aladdin",
+  "year": 2019,
+  "note": "collision: live action remake",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/rVqY0Bo4Npf6EIONUROxjYAJfmD.jpg",
+      "genre_ids": [
+        12,
+        14,
+        10749,
+        10751
+      ],
+      "id": 420817,
+      "title": "Aladdin",
+      "original_language": "en",
+      "original_title": "Aladdin",
+      "overview": "A kindhearted street urchin named Aladdin embarks on a magical adventure after finding a lamp that releases a wisecracking genie while a power-hungry Grand Vizier vies for the same lamp that has the power to make their deepest wishes come true.",
+      "popularity": 12.2252,
+      "poster_path": "/ykUEbfpkf8d0w49pHh0AD2KrT52.jpg",
+      "release_date": "2019-05-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.081,
+      "vote_count": 10701
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/nenJjvfe2Eq8uBMXFJnWj5mw4bi.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        12,
+        14,
+        10749
+      ],
+      "id": 812,
+      "title": "Aladdin",
+      "original_language": "en",
+      "original_title": "Aladdin",
+      "overview": "In the boorish city of Agrabah, kind-hearted street urchin Aladdin and Princess Jasmine fall in love, although she can only marry a prince. He and power-hungry Grand Vizier Jafar vie for a magic lamp that can fulfill their wishes.",
+      "popularity": 15.2739,
+      "poster_path": "/eLFfl7vS8dkeG1hKp5mwbm37V83.jpg",
+      "release_date": "1992-11-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.656,
+      "vote_count": 12120
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/RA2FjGBj1zMEEblkcXkpTthXzK.jpg",
+      "genre_ids": [
+        12,
+        14
+      ],
+      "id": 602411,
+      "title": "Adventures of Aladdin",
+      "original_language": "en",
+      "original_title": "Adventures of Aladdin",
+      "overview": "With the help of a magical lamp, an impoverished young man transforms himself into a prince in order to win the heart of a beautiful princess. A live-action retelling of the 1992 Disney film of the same name.",
+      "popularity": 1.0959,
+      "poster_path": "/w900HA8MiAEDY3IQl6mz5JY916F.jpg",
+      "release_date": "2019-05-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 3.979,
+      "vote_count": 47
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/uPWJAJJwwFuqzsZBsIiQ4vHJ6Ya.jpg",
+      "genre_ids": [
+        35,
+        14,
+        12
+      ],
+      "id": 459616,
+      "title": "The Brand New Adventures of Aladdin",
+      "original_language": "fr",
+      "original_title": "Alad'2",
+      "overview": "After freeing Baghdad from its terrible ruler, Aladin delays his marriage to the princess until a new dictator arrives to take over the city.",
+      "popularity": 1.7586,
+      "poster_path": "/dolYOzR2SnRRkNeRV6yE1c3bsxF.jpg",
+      "release_date": "2018-10-03",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.815,
+      "vote_count": 405
+    }
+  ]
+}

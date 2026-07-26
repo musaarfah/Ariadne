@@ -1,0 +1,27 @@
+{
+  "query": "The Double Life of Véronique",
+  "year": 1991,
+  "note": "accent, translated title",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/vjsFyeCf5W5rxCFpS9MIAEZJkIG.jpg",
+      "genre_ids": [
+        18,
+        14
+      ],
+      "id": 1600,
+      "title": "The Double Life of Véronique",
+      "original_language": "fr",
+      "original_title": "La Double Vie de Véronique",
+      "overview": "Véronique is a beautiful young French woman who aspires to be a renowned singer; Weronika lives in Poland, has a similar career goal and looks identical to Véronique, though the two are not related. The film follows both women as they contend with the ups and downs of their individual lives, with Véronique embarking on an unusual romance with Alexandre Fabbri, a puppeteer who may be able to help her with her existential issues.",
+      "popularity": 3.4415,
+      "poster_path": "/oqRyO9xrNBRaxqF9pCHHgLuaATx.jpg",
+      "release_date": "1991-05-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.485,
+      "vote_count": 905
+    }
+  ]
+}

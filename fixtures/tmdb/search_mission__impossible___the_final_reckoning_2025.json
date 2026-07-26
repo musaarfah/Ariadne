@@ -1,0 +1,28 @@
+{
+  "query": "Mission: Impossible – The Final Reckoning",
+  "year": 2025,
+  "note": "en dash, very recent",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/538U9snNc2fpnOmYXAPUh3zn31H.jpg",
+      "genre_ids": [
+        28,
+        53,
+        12
+      ],
+      "id": 575265,
+      "title": "Mission: Impossible - The Final Reckoning",
+      "original_language": "en",
+      "original_title": "Mission: Impossible - The Final Reckoning",
+      "overview": "Ethan Hunt and team continue their search for the terrifying AI known as the Entity — which has infiltrated intelligence networks all over the globe — with the world's governments and a mysterious ghost from Hunt's past on their trail. Joined by new allies and armed with the means to shut the Entity down for good, Hunt is in a race against time to prevent the world as we know it from changing forever.",
+      "popularity": 29.8496,
+      "poster_path": "/iKPsC9EFUafRP9SrUznI61getVP.jpg",
+      "release_date": "2025-05-17",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.172,
+      "vote_count": 2977
+    }
+  ]
+}

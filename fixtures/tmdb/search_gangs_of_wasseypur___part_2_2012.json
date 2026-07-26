@@ -1,0 +1,28 @@
+{
+  "query": "Gangs of Wasseypur – Part 2",
+  "year": 2012,
+  "note": "en dash, non-anglophone",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/nXkNbKFx8YLorku25MMLO5OV6aW.jpg",
+      "genre_ids": [
+        80,
+        53,
+        28
+      ],
+      "id": 126400,
+      "title": "Gangs of Wasseypur - Part 2",
+      "original_language": "hi",
+      "original_title": "गैंग्स ऑफ़ वास्सेपुर पार्ट - २",
+      "overview": "After the death of his father and brother Danish, Faizal Khan vows to take revenge by destroying Ramadhir Singh's gang.",
+      "popularity": 1.8267,
+      "poster_path": "/4CVPyT10Cvw9BCgWNKXiRcXntuc.jpg",
+      "release_date": "2012-08-08",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.8,
+      "vote_count": 107
+    }
+  ]
+}

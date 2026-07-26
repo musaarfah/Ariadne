@@ -1,0 +1,29 @@
+{
+  "query": "Les Misérables",
+  "year": 1998,
+  "note": "collision AND accent",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/g1J3SBqxbeHLTatlzHp8bGhaAwO.jpg",
+      "genre_ids": [
+        80,
+        18,
+        36,
+        10749
+      ],
+      "id": 4415,
+      "title": "Les Misérables",
+      "original_language": "en",
+      "original_title": "Les Misérables",
+      "overview": "In 19th century France, Jean Valjean, a man imprisoned for stealing bread, must flee a relentless policeman named Javert. The pursuit consumes both men's lives, and soon Valjean finds himself in the midst of the student revolutions in France.",
+      "popularity": 3.9783,
+      "poster_path": "/3TOgmlIY8X3WjIjvU7Z0jqeNkyU.jpg",
+      "release_date": "1998-05-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.24,
+      "vote_count": 690
+    }
+  ]
+}

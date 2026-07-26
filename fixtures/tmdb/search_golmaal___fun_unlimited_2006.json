@@ -1,0 +1,27 @@
+{
+  "query": "Golmaal – Fun Unlimited",
+  "year": 2006,
+  "note": "en dash, non-anglophone",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/4nxRuA3ANQVSlZNmaKXxXI5mgJS.jpg",
+      "genre_ids": [
+        35,
+        10751
+      ],
+      "id": 19670,
+      "title": "Golmaal – Fun Unlimited",
+      "original_language": "hi",
+      "original_title": "गोलमाल",
+      "overview": "Four runaway cons take shelter in a bungalow owned by an old blind couple.",
+      "popularity": 0.7082,
+      "poster_path": "/3ubefqLk26Gy0lXCfGIu8hQrBak.jpg",
+      "release_date": "2006-07-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.7,
+      "vote_count": 145
+    }
+  ]
+}

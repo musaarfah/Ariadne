@@ -1,0 +1,27 @@
+{
+  "query": "Mission: Impossible – Rogue Nation",
+  "year": 2015,
+  "note": "en dash",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/vYIUN5rrCncHFY8WvcuXQlM4hk5.jpg",
+      "genre_ids": [
+        28,
+        12
+      ],
+      "id": 177677,
+      "title": "Mission: Impossible - Rogue Nation",
+      "original_language": "en",
+      "original_title": "Mission: Impossible - Rogue Nation",
+      "overview": "Ethan and team take on their most impossible mission yet—eradicating 'The Syndicate', an International and highly-skilled rogue organization committed to destroying the IMF.",
+      "popularity": 10.856,
+      "poster_path": "/fRJLXQBHK2wyznK5yZbO7vmsuVK.jpg",
+      "release_date": "2015-07-28",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.226,
+      "vote_count": 9800
+    }
+  ]
+}

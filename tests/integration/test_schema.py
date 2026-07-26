@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import Engine, inspect, select, text
 from sqlalchemy.orm import Session
 
-from ariadne.db.models import Film, MediaType, Rating, Upload, UploadStatus
+from ariadne.db.models import Film, MatchMethod, Rating, Resolution, Upload, UploadStatus
 
 pytestmark = pytest.mark.integration
 
@@ -17,6 +17,7 @@ EXPECTED_TABLES = {
     "uploads",
     "ratings",
     "diary_entries",
+    "likes",
     "analysis_runs",
     "crew_effects",
     "recommendations",
@@ -60,7 +61,13 @@ def test_upload_and_rating_round_trip(session: Session):
     session.flush()
 
     session.add(
-        Rating(upload_id=upload.id, letterboxd_uri="https://boxd.it/2bg8", rating=Decimal("4.5"))
+        Rating(
+            upload_id=upload.id,
+            letterboxd_uri="https://boxd.it/2bg8",
+            name="The Godfather",
+            year=1972,
+            rating=Decimal("4.5"),
+        )
     )
     session.flush()
 
@@ -74,7 +81,15 @@ def test_rating_precision_holds_half_stars(session: Session):
     session.add(upload)
     session.flush()
 
-    session.add(Rating(upload_id=upload.id, letterboxd_uri="uri", rating=Decimal("0.5")))
+    session.add(
+        Rating(
+            upload_id=upload.id,
+            letterboxd_uri="uri",
+            name="A Film",
+            year=2001,
+            rating=Decimal("0.5"),
+        )
+    )
     session.flush()
     session.expire_all()
 
@@ -86,7 +101,15 @@ def test_deleting_an_upload_cascades_to_its_ratings(session: Session):
     upload = Upload(token="cascade-token")
     session.add(upload)
     session.flush()
-    session.add(Rating(upload_id=upload.id, letterboxd_uri="uri", rating=Decimal("3.0")))
+    session.add(
+        Rating(
+            upload_id=upload.id,
+            letterboxd_uri="uri",
+            name="A Film",
+            year=2001,
+            rating=Decimal("3.0"),
+        )
+    )
     session.flush()
 
     session.delete(upload)
@@ -96,20 +119,28 @@ def test_deleting_an_upload_cascades_to_its_ratings(session: Session):
     assert remaining == []
 
 
-def test_tv_is_representable(session: Session):
-    # Letterboxd exports contain television; it must be recordable so it can be excluded
-    # with a reported count rather than silently dropped.
+def test_television_is_recorded_on_resolutions_not_films(session: Session):
+    """Films holds only films.
+
+    TMDB movie ids and TV ids are separate namespaces that can collide on the same integer,
+    and films.tmdb_id is the primary key, so television cannot be stored there safely. It is
+    recorded as a resolution outcome instead, which keeps the exclusion count queryable.
+    """
+    assert not hasattr(Film, "media_type")
+
     session.add(
-        Film(
-            tmdb_id=1,
-            title="Obi-Wan Kenobi",
-            normalized_title="obi wan kenobi",
+        Resolution(
+            letterboxd_uri="https://boxd.it/obi",
+            name="Obi-Wan Kenobi",
             year=2022,
-            media_type=MediaType.TV,
+            tmdb_id=None,
+            match_method=MatchMethod.TELEVISION,
+            reason="matched a television series",
         )
     )
     session.flush()
 
-    stored = session.get(Film, 1)
+    stored = session.get(Resolution, "https://boxd.it/obi")
     assert stored is not None
-    assert stored.media_type is MediaType.TV
+    assert stored.match_method is MatchMethod.TELEVISION
+    assert stored.tmdb_id is None

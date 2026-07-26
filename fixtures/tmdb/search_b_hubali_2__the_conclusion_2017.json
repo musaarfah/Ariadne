@@ -1,0 +1,28 @@
+{
+  "query": "Bāhubali 2: The Conclusion",
+  "year": 2017,
+  "note": "macron",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/whNjsTOUVg2lZLCKgGhnACnmV8E.jpg",
+      "genre_ids": [
+        28,
+        12,
+        14
+      ],
+      "id": 350312,
+      "title": "Bāhubali 2: The Conclusion",
+      "original_language": "te",
+      "original_title": "బాహుబలి 2: ది కన్ క్లూజన్",
+      "overview": "When Mahendra, the son of Bāhubali, learns about his heritage, he begins to look for answers. His story is juxtaposed with past events that unfolded in the Mahishmati Kingdom.",
+      "popularity": 3.8194,
+      "poster_path": "/21sC2assImQIYCEDA84Qh9d1RsK.jpg",
+      "release_date": "2017-04-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.485,
+      "vote_count": 868
+    }
+  ]
+}

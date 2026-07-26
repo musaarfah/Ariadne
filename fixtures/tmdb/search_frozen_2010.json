@@ -1,0 +1,162 @@
+{
+  "query": "Frozen",
+  "year": 2010,
+  "note": "collision",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/vD1yKObsRS2cvpmtuaCaMhr4zxe.jpg",
+      "genre_ids": [
+        53
+      ],
+      "id": 44363,
+      "title": "Frozen",
+      "original_language": "en",
+      "original_title": "Frozen",
+      "overview": "When three skiers find themselves stranded on a chair lift at a New England ski resort that has closed for the next week, they are forced to make life or death choices that prove to be more perilous than staying put and freezing to death.",
+      "popularity": 3.5747,
+      "poster_path": "/2J3URUnDrIpNvh0uVqINQvr4HhW.jpg",
+      "release_date": "2010-02-05",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.0,
+      "vote_count": 2029
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/9bvn5SWwAK6qB79UevNi0jqhfke.jpg",
+      "genre_ids": [
+        18
+      ],
+      "id": 17903,
+      "title": "A Frozen Flower",
+      "original_language": "ko",
+      "original_title": "쌍화점",
+      "overview": "A historical drama set in the Koryo dynasty and focused on the relationship between a king and his bodyguard.",
+      "popularity": 8.224,
+      "poster_path": "/jvGmbNUh0eq9ShQmMSof0DXXHWY.jpg",
+      "release_date": "2008-12-30",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.85,
+      "vote_count": 160
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/gOhtvGwrVkEM5hCFdyyWKJEOBk8.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 10183,
+      "title": "Frozen River",
+      "original_language": "en",
+      "original_title": "Frozen River",
+      "overview": "After her husband deserts her, working-class mother Ray Eddy is in great need of money to find a home. Lured by the possibility of easy cash, she joins Lila, a widowed Mohawk who earns a living by smuggling immigrants from Canada to the U.S. across the St. Lawrence.",
+      "popularity": 1.565,
+      "poster_path": "/qZRcN4JLwYQWTxKlycZPLQb37mO.jpg",
+      "release_date": "2008-03-26",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.636,
+      "vote_count": 359
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/j1nChiTr3CrVqGUJtHo1iUc3Gcc.jpg",
+      "genre_ids": [
+        18
+      ],
+      "id": 18279,
+      "title": "Frozen Land",
+      "original_language": "fi",
+      "original_title": "Paha maa",
+      "overview": "When a schoolteacher is sacked, he projects his bad mood at his troubled teenage son. The son, in turn, buys a CD player from a pawnshop with counterfeit money. This starts a chain reaction of misery as every victim projects his problems on to another person.",
+      "popularity": 1.35,
+      "poster_path": "/dTrzRNF1HKCBnHfq5XK3J500aGA.jpg",
+      "release_date": "2005-01-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.806,
+      "vote_count": 67
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/aTzA6xK0iBFusFFi2QdbFACgqQ5.jpg",
+      "genre_ids": [
+        35,
+        14,
+        10402,
+        10749
+      ],
+      "id": 95174,
+      "title": "Frozen",
+      "original_language": "cn",
+      "original_title": "為你鍾情",
+      "overview": "Wing, a naive girl accidentally revives her cryogenically frozen mother, who is now the same age as her. The pair set out to find the mother’s former boyfriend - Wing’s biological father.",
+      "popularity": 2.4711,
+      "poster_path": "/etDRhc599Q2JCaUu8k7ei2hqmgZ.jpg",
+      "release_date": "2010-09-02",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.5,
+      "vote_count": 2
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        18
+      ],
+      "id": 601152,
+      "title": "Frozen Land",
+      "original_language": "ko",
+      "original_title": "얼어붙은 땅",
+      "overview": "Kyung-Jae and Byung-Jo make money from helping people who illegally enter into Korea from China. One day, the stowaways excpet one girl all died in a refrigerator van during transportation. Now Kyung-Jae and Byung-Jo have to make decision whethere to get rid of her or not.",
+      "popularity": 1.5596,
+      "poster_path": null,
+      "release_date": "2010-12-13",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [],
+      "id": 1514868,
+      "title": "The Frozen Autumn: Seen From Under Ice",
+      "original_language": "en",
+      "original_title": "The Frozen Autumn: Seen From Under Ice",
+      "overview": "Contains 27 tracks + backstage footage + credits and much more – for a total running time of approximately 3 hours of mostly unreleased and rare video material.",
+      "popularity": 0.0571,
+      "poster_path": "/jeZJPDmSt63GwCuKJp4XLf5aiX0.jpg",
+      "release_date": "2010-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/5df3793jyBeUQupx0uq1cA6lGF8.jpg",
+      "genre_ids": [
+        27,
+        878
+      ],
+      "id": 23410,
+      "title": "The Thaw",
+      "original_language": "en",
+      "original_title": "The Thaw",
+      "overview": "At a remote Arctic research station, four ecology students discover the real horror of global warming is not the melting ice, but what's frozen within it. A prehistoric parasite is released from the carcass of a Woolly Mammoth upon the unsuspecting students who are forced to quarantine and make necessary sacrifices, or risk infecting the rest of the world.",
+      "popularity": 2.3584,
+      "poster_path": "/6oxJ75L6rB88TeSspcnPA7JqjWw.jpg",
+      "release_date": "2009-08-30",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.698,
+      "vote_count": 354
+    }
+  ]
+}

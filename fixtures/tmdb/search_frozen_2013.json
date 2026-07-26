@@ -1,0 +1,168 @@
+{
+  "query": "Frozen",
+  "year": 2013,
+  "note": "collision",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/rj58WQ9ImI0mYDptXdM7euX1Wjt.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        12,
+        14
+      ],
+      "id": 109445,
+      "title": "Frozen",
+      "original_language": "en",
+      "original_title": "Frozen",
+      "overview": "Young princess Anna of Arendelle dreams about finding true love at her sister Elsa’s coronation. Fate takes her on a dangerous journey in an attempt to end the eternal winter that has fallen over the kingdom. She's accompanied by ice delivery man Kristoff, his reindeer Sven, and snowman Olaf. On an adventure where she will find out what friendship, courage, family, and true love really means.",
+      "popularity": 21.2636,
+      "poster_path": "/itAKcobTYGpYT8Phwjd8c9hleTo.jpg",
+      "release_date": "2013-11-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.25,
+      "vote_count": 17701
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/xLW4UQ4zYf7fHrei9pqx4fJsfKy.jpg",
+      "genre_ids": [
+        53,
+        80
+      ],
+      "id": 199373,
+      "title": "The Frozen Ground",
+      "original_language": "en",
+      "original_title": "The Frozen Ground",
+      "overview": "An Alaska State Trooper partners with a young woman who escaped the clutches of serial killer Robert Hansen to bring the murderer to justice. Based on actual events.",
+      "popularity": 3.3586,
+      "poster_path": "/hHDj1h3lJvYd9Cervoswz9crhWg.jpg",
+      "release_date": "2013-07-11",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.275,
+      "vote_count": 1610
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/zytEeKtncCKk2jnBaS89r0cQSlo.jpg",
+      "genre_ids": [
+        10752,
+        9648,
+        18
+      ],
+      "id": 85434,
+      "title": "Frozen Silence",
+      "original_language": "es",
+      "original_title": "Silencio en la nieve",
+      "overview": "Russian front, winter 1943. Soldier Arturo Andrade and Sergeant Fernando Espinosa are commissioned to investigate a mysterious murder while the Spanish Blue Division of the German Army endures the fierce counterattack of the Red Army.",
+      "popularity": 0.7991,
+      "poster_path": "/753mxMXHKLXl9YUVxnpFH6OgaLQ.jpg",
+      "release_date": "2012-01-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.115,
+      "vote_count": 39
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        16
+      ],
+      "id": 904358,
+      "title": "Frozen Fun",
+      "original_language": "de",
+      "original_title": "Frozen Fun",
+      "overview": "A snowball fight is fun for everyone!  Because it's sooo cold outside, the penguin has to think of something special to get his friends to join in the game.",
+      "popularity": 0.4254,
+      "poster_path": "/838qaYHHnWTH4CrOANGsS1Ax10H.jpg",
+      "release_date": "2013-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/zWx1o1GfAwqEyW9RhcFYzIL3rVx.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 382201,
+      "title": "Shackleton's Frozen Hell",
+      "original_language": "en",
+      "original_title": "Shackleton's Frozen Hell",
+      "overview": "In 1914, the world's first trans-Antarctic expedition came to a cold stop. Trapped in ice just 60 miles from their destination, explorer Ernest Shackleton and his crew found themselves in a dire situation that would play out as a two-year battle against starvation, sub-zero conditions, and the threat of being swallowed by the unforgiving Southern Ocean. Witness this incredible story of courage and survival, fueled by ship captain Frank Worsley's exceptional navigational skills, the crew's resiliency, and Shackleton's cool-headed leadership.",
+      "popularity": 0.26,
+      "poster_path": "/8LlvhVFg59xbeV1UVBXps8qQkXJ.jpg",
+      "release_date": "2013-07-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wdkHetx0rxl6dbEFys0vYaT9r3X.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 157924,
+      "title": "Pompeii: The Mystery of the People Frozen in Time",
+      "original_language": "en",
+      "original_title": "Pompeii: The Mystery of the People Frozen in Time",
+      "overview": "In a one off landmark drama documentary for BBC One, Dr Margaret Mountford presents Pompeii: The Mystery Of The People Frozen In Time.",
+      "popularity": 0.1837,
+      "poster_path": "/bMJSIq3Nl3mPE87ScQXzwHvT3Hg.jpg",
+      "release_date": "2013-03-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.0,
+      "vote_count": 5
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/xJlrnsDBMKgIGpSmcgnhVPdK8xO.jpg",
+      "genre_ids": [
+        28,
+        878
+      ],
+      "id": 182228,
+      "title": "100 Degrees Below Zero",
+      "original_language": "en",
+      "original_title": "100 Degrees Below Zero",
+      "overview": "After freak climate and weather events destroy the world around them, a group of rogue scientists attempt to reverse the deadly new ice age.",
+      "popularity": 1.3755,
+      "poster_path": "/1keE9oReldd7QmG8epHoY23jQXv.jpg",
+      "release_date": "2013-03-29",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.2,
+      "vote_count": 138
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/jU2t3N0VAV5fTeuZ0uSySip88EL.jpg",
+      "genre_ids": [
+        10751,
+        16,
+        12
+      ],
+      "id": 233423,
+      "title": "The Legend of Sarila",
+      "original_language": "en",
+      "original_title": "The Legend of Sarila",
+      "overview": "Three young Inuits set off in search of a promised land to save their clan from starvation.",
+      "popularity": 1.6637,
+      "poster_path": "/ezCEivHaz6zUB1uc0JZzcUUpjz0.jpg",
+      "release_date": "2013-02-21",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.9,
+      "vote_count": 26
+    }
+  ]
+}

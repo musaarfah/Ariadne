@@ -1,0 +1,101 @@
+{
+  "query": "Beauty and the Beast",
+  "year": 2017,
+  "note": "collision: live action remake",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/uU1Mt4JWhDvl4vKb3AfxNsorkoM.jpg",
+      "genre_ids": [
+        10751,
+        14,
+        10749
+      ],
+      "id": 321612,
+      "title": "Beauty and the Beast",
+      "original_language": "en",
+      "original_title": "Beauty and the Beast",
+      "overview": "A live-action adaptation of Disney's version of the classic tale of a cursed prince and a beautiful young woman who helps him break the spell.",
+      "popularity": 15.5995,
+      "poster_path": "/hKegSKIDep2ewJWPUQD7u0KqFIp.jpg",
+      "release_date": "2017-03-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.967,
+      "vote_count": 16079
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/92Uceuy7HaiiHFgW48gNyxhx17d.jpg",
+      "genre_ids": [
+        14,
+        10749
+      ],
+      "id": 197796,
+      "title": "Beauty and the Beast",
+      "original_language": "fr",
+      "original_title": "La Belle et la Bête",
+      "overview": "Forced to face the cruel side of life, a devastated, bankrupt merchant chances upon the enchanted castle of a hideous creature, the mere sight of it chills the bone to the marrow. There, a fate worse than death awaits the poor father-of-six, who, after plucking a sweet-scented rose from the repulsive master's verdant garden, must do the impossible: permit his compassionate daughter, Belle, to take his place and pay for the sins of her parent. Now, an impenetrable mystery shrouds the haunted mansion, and, as repugnance gradually turns into affection, only true love could break the spell.",
+      "popularity": 6.2507,
+      "poster_path": "/8bErT2koHXAUSW5PdLQqgL5gEEe.jpg",
+      "release_date": "2014-02-12",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.285,
+      "vote_count": 2212
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [],
+      "id": 1729291,
+      "title": "The Beauty and the Beast",
+      "original_language": "it",
+      "original_title": "The Beauty and the Beast",
+      "overview": "The Beauty and the Beast was filmed inside the Museo Civico di Storia Naturale in Milan.  The museum is empty, except for a little girl who, with an old satchel on her back, walks through it, crossing the gazes of taxidermied animals inside the display cases.  The girl’s innocence contrasts with the text she reads—almost as if voicing her thoughts—while the camera follows her from behind. What we hear is an altered excerpt from The Banality of Evil by German philosopher Hannah Arendt.  As she reads, the child seems to pose profound questions to the viewer about life, death, and human violence.  The name of Adolf Eichmann, the Nazi official prosecuted in the historic Jerusalem trial for crimes against humanity, has been removed from the text so that the girl never says his name—instead referring to him only as He or It.  This decision stems from the desire not to focus on a single historical episode, but to address the concept of the banality of evil in a broader, universal sense.",
+      "popularity": 0.1187,
+      "poster_path": "/4rq0q3P0C1y5cDBVi5xBbk0qkRG.jpg",
+      "release_date": "2017-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wiJgv5oZWwvtOmr7fwFNrcTsMsw.jpg",
+      "genre_ids": [],
+      "id": 707987,
+      "title": "Chichester Festival Theatre: Beauty and the Beast",
+      "original_language": "en",
+      "original_title": "Chichester Festival Theatre: Beauty and the Beast",
+      "overview": "A foolish prince cursed to a life alone in a castle; a kind and beautiful girl who asks her father for nothing but a rose. One must learn to love and be loved in return, the other needs to realise there’s more than meets the eye. It’s a tale of magic, compassion and love, full of enchanting characters, marvellous musical numbers and some deliciously scary moments, guaranteed to delight the whole family.",
+      "popularity": 0.2917,
+      "poster_path": "/r5iSX4zmSuSqplyHM3o5opoutNP.jpg",
+      "release_date": "2017-12-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/e0rBEUIeSeLo7EdPez8XxX68keW.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 476378,
+      "title": "Kevyn Aucoin Beauty & the Beast in Me",
+      "original_language": "en",
+      "original_title": "Kevyn Aucoin Beauty & the Beast in Me",
+      "overview": "A documentary exploring the life and legacy of iconic makeup artist Kevyn Aucoin.",
+      "popularity": 0.8772,
+      "poster_path": "/7eLQtBnk0npQ1hw9YRQzDUy6pta.jpg",
+      "release_date": "2017-07-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.5,
+      "vote_count": 2
+    }
+  ]
+}

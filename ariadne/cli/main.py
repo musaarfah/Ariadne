@@ -3,12 +3,14 @@ from pathlib import Path
 
 import typer
 from redis import Redis
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, select, text
 
 from ariadne.core.catalog.fixtures import FIXTURE_DIR, capture_all
+from ariadne.core.catalog.pipeline import ResolveStats, resolve_upload
 from ariadne.core.catalog.tmdb import TmdbAuthError, TmdbClient, TmdbError
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
+from ariadne.db.models import Upload
 from ariadne.db.session import get_engine, session_scope
 from ariadne.settings import get_settings
 
@@ -141,6 +143,54 @@ def tmdb_capture() -> None:
         typer.echo(f"  {name}")
     typer.echo(f"\n{len(written)} fixtures written to {FIXTURE_DIR}")
     typer.echo(f"requests    {client.request_count} ({client.retry_count} retried)")
+
+
+@app.command("resolve")
+def resolve(
+    token: str = typer.Argument(..., help="Upload token from `ariadne ingest`"),
+    limit: int | None = typer.Option(None, "--limit", help="Resolve only the first N films"),
+    offline: bool = typer.Option(
+        False, "--offline", help="Use only the local catalog; make no TMDB calls"
+    ),
+) -> None:
+    """Resolve an upload's rated films to TMDB ids."""
+    client = None if offline else TmdbClient()
+
+    def progress(done: int, total: int, stats: ResolveStats) -> None:
+        if done % 100 == 0 or done == total:
+            typer.echo(
+                f"  {done}/{total}  resolved {stats.resolved}  "
+                f"failed {stats.failed}  tv {stats.television}  api {stats.from_api}"
+            )
+
+    started = time.perf_counter()
+    with session_scope() as session:
+        upload = session.execute(select(Upload).where(Upload.token == token)).scalar_one_or_none()
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        stats = resolve_upload(session, client, upload.id, limit=limit, on_progress=progress)
+    elapsed = time.perf_counter() - started
+
+    typer.echo("")
+    typer.echo(f"films               {stats.total}")
+    typer.echo(f"resolved            {stats.resolved}  ({stats.resolution_rate * 100:.1f}%)")
+    typer.echo(f"television excluded {stats.television}")
+    typer.echo(f"unresolved          {stats.failed}")
+    if stats.errors:
+        typer.echo(f"errors              {stats.errors}")
+    typer.echo("")
+    typer.echo(f"from cache          {stats.from_cache}")
+    typer.echo(f"from local catalog  {stats.from_local}")
+    typer.echo(f"from tmdb api       {stats.from_api}")
+    if client is not None:
+        typer.echo(f"requests            {client.request_count} ({client.retry_count} retried)")
+    typer.echo("")
+    for method, count in sorted(stats.methods.items(), key=lambda kv: -kv[1]):
+        typer.echo(f"  {method:<12} {count}")
+    typer.echo("")
+    typer.echo(f"elapsed             {elapsed:.1f}s")
 
 
 if __name__ == "__main__":

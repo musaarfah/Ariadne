@@ -37,10 +37,10 @@ from ariadne.db.base import Base
 
 # --- shared catalog ---------------------------------------------------------------------
 
-
-class MediaType(enum.StrEnum):
-    MOVIE = "movie"
-    TV = "tv"
+# Only films live here. Television is never stored: TMDB movie ids and TV ids are separate
+# namespaces that can collide on the same integer, and tmdb_id is this table's primary key.
+# A Letterboxd entry identified as television is recorded on resolutions with method
+# TELEVISION, which keeps the exclusion count queryable without risking a wrong join.
 
 
 class Film(Base):
@@ -58,13 +58,6 @@ class Film(Base):
     vote_average: Mapped[float | None] = mapped_column(Float)
     vote_count: Mapped[int | None] = mapped_column(Integer)
     country: Mapped[str | None] = mapped_column(String(2))
-
-    # Letterboxd exports include some television (Obi-Wan Kenobi appears in the reference
-    # account). TV is recorded and then excluded from the crew model with a reported count,
-    # never silently dropped.
-    media_type: Mapped[MediaType] = mapped_column(
-        Enum(MediaType, name="media_type"), default=MediaType.MOVIE
-    )
 
     raw: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -115,7 +108,13 @@ class Credit(Base):
 class MatchMethod(enum.StrEnum):
     EXACT = "exact"
     TRIGRAM = "trigram"
+    # Several TMDB entries shared the title and year; one overwhelmed the rest by vote count.
+    # Kept distinct from EXACT so these can be counted and audited separately.
+    DOMINANT = "dominant"
     MANUAL = "manual"
+    # Identified as television, so deliberately not resolved to a film. Distinct from
+    # UNRESOLVED so the exclusion count is a query rather than a guess.
+    TELEVISION = "television"
     UNRESOLVED = "unresolved"
 
 
@@ -134,6 +133,10 @@ class Resolution(Base):
     tmdb_id: Mapped[int | None] = mapped_column(ForeignKey("films.tmdb_id", ondelete="SET NULL"))
     match_method: Mapped[MatchMethod] = mapped_column(Enum(MatchMethod, name="match_method"))
     confidence: Mapped[float | None] = mapped_column(Float)
+
+    # Why the resolver decided what it did. Read by the 100-match hand audit in 1.4, where
+    # "which rule fired" is the difference between a useful audit and staring at ids.
+    reason: Mapped[str | None] = mapped_column(Text)
     resolved_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -182,6 +185,12 @@ class Rating(Base):
 
     # Not a foreign key to resolutions: ratings land at ingest, before anything is resolved.
     letterboxd_uri: Mapped[str] = mapped_column(String(200))
+
+    # The title and year exactly as Letterboxd exported them. Kept here rather than seeding
+    # resolutions, so that table holds only resolver output and "row exists" unambiguously
+    # means "already attempted".
+    name: Mapped[str] = mapped_column(String(500))
+    year: Mapped[int | None] = mapped_column(Integer)
 
     rating: Mapped[Decimal] = mapped_column(Numeric(2, 1))
 

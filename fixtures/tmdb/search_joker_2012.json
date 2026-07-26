@@ -1,0 +1,47 @@
+{
+  "query": "Joker",
+  "year": 2012,
+  "note": "collision",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/hduMeCHbr3ISsjyblQ2DxmTRvAb.jpg",
+      "genre_ids": [
+        35,
+        878
+      ],
+      "id": 129507,
+      "title": "Joker",
+      "original_language": "hi",
+      "original_title": "Joker",
+      "overview": "In 1947 when the maps of India and Pakistan were being drawn, an oversight ensured that the village of Paglapur didn't find a place in either country. Over 60 years later, Paglapur is isolated, and in need of help. The residents seek help, but as a direct result of being left off the map, they find no one willing to accept Paglapur, and its problems, as their jurisdiction. The villagers decide they need to draw media attention to Paglapur, and in so doing, gain acceptance and help from those who had previously denied them.",
+      "popularity": 0.5207,
+      "poster_path": "/gA3xoiTWuaqEAiBXUqTv0gfZRSA.jpg",
+      "release_date": "2012-08-31",
+      "softcore": false,
+      "video": false,
+      "vote_average": 4.223,
+      "vote_count": 56
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/1a9Uws1r05EiaoxnO9UyRIFo8w5.jpg",
+      "genre_ids": [
+        53,
+        27
+      ],
+      "id": 354788,
+      "title": "Joker Game",
+      "original_language": "ja",
+      "original_title": "ジョーカーゲーム",
+      "overview": "All seniors at a high school stay together at a camp, including student Chinatsu. On their first day, the home room teacher announces that all the students must play the card game \"Old Maid\". In order to reverse the declining academic abilities of its younger generation, the Japanese government planned this camping program. In this card game, the students that lose will meet their deaths.",
+      "popularity": 0.567,
+      "poster_path": "/ixRcfhKV5AcETSdInt7NlHK5SuL.jpg",
+      "release_date": "2012-12-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.0,
+      "vote_count": 1
+    }
+  ]
+}

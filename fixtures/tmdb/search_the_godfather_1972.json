@@ -1,7 +1,7 @@
 {
   "query": "The Godfather",
   "year": 1972,
-  "note": "control case",
+  "note": "control: should be trivial",
   "results": [
     {
       "adult": false,

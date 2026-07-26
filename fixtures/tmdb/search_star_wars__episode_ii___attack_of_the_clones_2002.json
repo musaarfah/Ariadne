@@ -1,0 +1,47 @@
+{
+  "query": "Star Wars: Episode II – Attack of the Clones",
+  "year": 2002,
+  "note": "en dash + no-break space",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/abwxHfymXGAbbH3lo9PDEJEfvtW.jpg",
+      "genre_ids": [
+        12,
+        28,
+        878
+      ],
+      "id": 1894,
+      "title": "Star Wars: Episode II - Attack of the Clones",
+      "original_language": "en",
+      "original_title": "Star Wars: Episode II - Attack of the Clones",
+      "overview": "Following an assassination attempt on Senator Padmé Amidala, Jedi Knights Anakin Skywalker and Obi-Wan Kenobi investigate a mysterious plot into the heart of the Separatist movement and the beginning of the Clone Wars.",
+      "popularity": 12.5172,
+      "poster_path": "/oZNPzxqM2s5DyVWab09NTQScDQt.jpg",
+      "release_date": "2002-05-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.597,
+      "vote_count": 14488
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/9zmphmzOh6zvycSiva8Eh6qBD3P.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 435147,
+      "title": "From Puppets to Pixels: The Making of Star Wars Episode II",
+      "original_language": "en",
+      "original_title": "From Puppets to Pixels: The Making of Star Wars Episode II",
+      "overview": "For Star Wars: Episode II - Attack of the Clones (2002), there were to be many more visual effects than in Star Wars: Episode I - The Phantom Menace (1999). This documentary shows many VFX meetings between George Lucas and ILM. Many of these meetings focus around the creation of a completely digital Yoda, used for the first time in the Star Wars films.",
+      "popularity": 0.963,
+      "poster_path": "/xPv8df5jYFnogXLXm0LvjSJlVJk.jpg",
+      "release_date": "2002-11-12",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.8,
+      "vote_count": 11
+    }
+  ]
+}

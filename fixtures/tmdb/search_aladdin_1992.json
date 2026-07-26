@@ -1,0 +1,113 @@
+{
+  "query": "Aladdin",
+  "year": 1992,
+  "note": "collision: animated original",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/nenJjvfe2Eq8uBMXFJnWj5mw4bi.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        12,
+        14,
+        10749
+      ],
+      "id": 812,
+      "title": "Aladdin",
+      "original_language": "en",
+      "original_title": "Aladdin",
+      "overview": "In the boorish city of Agrabah, kind-hearted street urchin Aladdin and Princess Jasmine fall in love, although she can only marry a prince. He and power-hungry Grand Vizier Jafar vie for a magic lamp that can fulfill their wishes.",
+      "popularity": 15.2739,
+      "poster_path": "/eLFfl7vS8dkeG1hKp5mwbm37V83.jpg",
+      "release_date": "1992-11-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.7,
+      "vote_count": 12120
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/2TiLyU66HpxoU15PWzj1WHReC78.jpg",
+      "genre_ids": [
+        16,
+        14,
+        10751,
+        12
+      ],
+      "id": 343693,
+      "title": "Aladdin",
+      "original_language": "en",
+      "original_title": "Aladdin",
+      "overview": "A young man's life is turned around with the help of a genie inside a lamp.",
+      "popularity": 0.7142,
+      "poster_path": "/6NGjDdErVOmnoqLnjh0ouRfxerS.jpg",
+      "release_date": "1992-04-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.0,
+      "vote_count": 68
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/lLdMjAyHDWeudxnKYUzkoTVzNnF.jpg",
+      "genre_ids": [
+        16,
+        10751
+      ],
+      "id": 357528,
+      "title": "Aladdin",
+      "original_language": "en",
+      "original_title": "Aladdin",
+      "overview": "A young man's life is turned around with the help of a genie inside a lamp.",
+      "popularity": 1.2144,
+      "poster_path": "/wtts9Wl5tf3PYIxALHqy6J45cwl.jpg",
+      "release_date": "1992-11-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.6,
+      "vote_count": 15
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/pC6NWgQutfqUMCEgLbRakuKetRc.jpg",
+      "genre_ids": [
+        14,
+        10402,
+        10751
+      ],
+      "id": 19330,
+      "title": "Aladdin: A Musical Spectacular",
+      "original_language": "en",
+      "original_title": "Aladdin: A Musical Spectacular",
+      "overview": "Disney's Aladdin: A Musical Spectacular is a musical show that plays at Disney's California Adventure. Based on the Disney film by the same name, the show plays inside Hyperion Theater Hollywood Pictures Backlot. The show is located right next to the Twilight Zone Tower of Terror.",
+      "popularity": 0.2187,
+      "poster_path": "/5hsKrXIO5Vpp4ZxhVGXR1vL4EcQ.jpg",
+      "release_date": "1992-11-11",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.0,
+      "vote_count": 42
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99,
+        10751
+      ],
+      "id": 367639,
+      "title": "The Making of Aladdin: A Whole New World",
+      "original_language": "en",
+      "original_title": "The Making of Aladdin: A Whole New World",
+      "overview": "Hosted by John Rhys-Davies, a made-for-TV documentary details the work that went into the production of Aladdin, Disney's musical rendition of the classic Arabian Nights' tale. Animation fans are treated to a behind-the-scenes look at the making of this family favorite, as well as to interviews with the director and cast members, who give their insights into the inspirations for the various characterizations and effects of the film, and also the efforts that were needed to bring this project to completion.",
+      "popularity": 0.4277,
+      "poster_path": "/lDtIP7osw3teeb3vNI02fQtJp0d.jpg",
+      "release_date": "1992-11-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.0,
+      "vote_count": 2
+    }
+  ]
+}

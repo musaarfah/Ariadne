@@ -1,7 +1,7 @@
 {
   "query": "Obi-Wan Kenobi",
   "year": 2022,
-  "note": "television, should not match a movie",
+  "note": "television: must NOT match a movie",
   "results": [
     {
       "adult": false,

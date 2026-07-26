@@ -96,6 +96,19 @@ class TmdbClient:
         results = payload.get("results", [])
         return results if isinstance(results, list) else []
 
+    def search_tv(self, title: str, year: int | None = None) -> list[dict[str, Any]]:
+        """Television search, used only to explain a movie-search failure.
+
+        Letterboxd exports contain some television. Confirming that is what an unresolved
+        entry actually is turns an opaque failure into a reportable exclusion.
+        """
+        params: dict[str, Any] = {"query": title}
+        if year is not None:
+            params["first_air_date_year"] = year
+        payload = self._get("/search/tv", params)
+        results = payload.get("results", [])
+        return results if isinstance(results, list) else []
+
     def get_movie(self, tmdb_id: int) -> dict[str, Any]:
         return self._get(f"/movie/{tmdb_id}", {})
 

@@ -1,0 +1,46 @@
+{
+  "query": "Les Misérables",
+  "year": 2012,
+  "note": "collision AND accent",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/bsG8LkZx1ijrcf3fP6AvBlGTxkX.jpg",
+      "genre_ids": [
+        36,
+        18
+      ],
+      "id": 82695,
+      "title": "Les Misérables",
+      "original_language": "en",
+      "original_title": "Les Misérables",
+      "overview": "An adaptation of the successful stage musical based on Victor Hugo's classic novel set in 19th-century France. Jean Valjean, a man imprisoned for stealing bread, must flee a relentless policeman named Javert. The pursuit consumes both men's lives, and soon Valjean finds himself in the midst of the student revolutions in France.",
+      "popularity": 8.1928,
+      "poster_path": "/6CuzBs2Lb8At7qQr64mLXg2RYRb.jpg",
+      "release_date": "2012-12-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.302,
+      "vote_count": 5621
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/iV8it5764PGelcJZARynq4BJSgm.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 383464,
+      "title": "Les Misérables: A Revolutionary Approach",
+      "original_language": "en",
+      "original_title": "Les Misérables: A Revolutionary Approach",
+      "overview": "The Making of the 2012 Film 'Les Misérables'",
+      "popularity": 0.3474,
+      "poster_path": "/a8Dom71KgBalIpa1o9CVdEaQCkD.jpg",
+      "release_date": "2012-02-18",
+      "softcore": false,
+      "video": true,
+      "vote_average": 10.0,
+      "vote_count": 2
+    }
+  ]
+}

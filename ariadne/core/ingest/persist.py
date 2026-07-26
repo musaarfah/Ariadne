@@ -32,6 +32,8 @@ def persist_export(session: Session, parsed: ParsedExport, token: str | None = N
         Rating(
             upload_id=upload.id,
             letterboxd_uri=rating.letterboxd_uri,
+            name=rating.name,
+            year=rating.year,
             rating=rating.rating,
             logged_date=rating.logged_date,
         )
