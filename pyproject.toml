@@ -1,0 +1,62 @@
+[project]
+name = "ariadne"
+version = "0.1.0"
+description = "Find the below-the-line crew that explains your film taste"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.2",
+    "typer>=0.12",
+    "redis>=5.0",
+]
+
+# Numerical stack arrives in Phase 1 (see docs/PHASES.md 1.6-1.8), API stack in Phase 2.
+# Keeping them out until they are used keeps the environment installable and honest
+# about what the project currently does.
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[project.scripts]
+ariadne = "ariadne.cli.main:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ariadne*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: requires a live Postgres (deselect with '-m \"not integration\"')",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Alembic writes these and they are immutable once applied. Linting generated code
+# produces churn without catching anything.
+exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# SIM300 wants ALL_CAPS names treated as literals and moved left, which makes
+# "assert CONSTANT == expected" read backwards.
+ignore = ["SIM300"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false

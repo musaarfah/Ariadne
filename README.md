@@ -51,12 +51,30 @@ See `docs/Ariadne.MD` for the full spec, `docs/PHASES.md` for the execution plan
 Get your data: **letterboxd.com → Settings → Import & Export → Export Your Data**
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env      # add your TMDB API key
-python -m ariadne analyze path/to/letterboxd-export.zip
+ariadne analyze path/to/letterboxd-export.zip
 ```
 
 No Letterboxd login. No password. No OAuth. No scraping. Just the zip you already own.
+
+## Development
+
+```bash
+docker compose -f infra/docker-compose.yml up -d   # Postgres 16 + Redis
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+cp .env.example .env                               # add your TMDB API key
+alembic upgrade head
+ariadne db-check                                   # verifies Postgres, pg_trgm, Redis, schema
+```
+
+Checks:
+
+```bash
+ruff check . && ruff format --check .
+mypy ariadne
+alembic check          # fails if models and migrations have drifted
+pytest -q              # integration tests need the containers up
+```
 
 ---
 
