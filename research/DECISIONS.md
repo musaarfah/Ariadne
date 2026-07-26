@@ -693,3 +693,73 @@ enters a JSONB payload.
 **Why.** JSON has no NaN, so one non-finite value makes an entire run unwritable. Losing a measurement
 to a formatting detail is not acceptable.
 **Status.** Active, regression-tested.
+
+---
+
+## Phase: Track 1 and the negative controls — 2026-07-26
+
+### D72 — The ANOVA moment estimator for the shrinkage constant
+**Context.** The shuffle test found effects on randomly permuted ratings almost as large as real ones:
+1.111 against 1.147, with 37 of 44 "significant" findings reproducible from noise.
+**Cause.** `estimate_k` corrected the observed spread of group means by `within / mean_n`. With ~700 of
+782 editors appearing on one film, `mean_n` was about 2, the correction was far too small, and k came
+out near 3 — leaving 68% of each raw mean unshrunk at n=8.
+**Decision.** Use the one-way random-effects moment estimator with an effective group size that
+accounts for imbalance.
+**Why.** On real data k barely changes (3.86 → 3.71); under the null it goes from ~3 to 56–10¹². That
+asymmetry is exactly what shrinkage is for. Afterwards the shuffled maximum is 0.270 against a real
+1.490 and above-threshold counts fall from 37 to 2.
+**Status.** Active. **This bug would have invalidated every crew finding**, and only the shuffle test
+could have caught it.
+
+### D73 — A shuffle-test pass needs two ratios, not an inequality
+**Context.** The original criterion asked only whether the shuffled maximum was below the real one,
+which 1.111 against 1.147 satisfies. It reported a pass on a broken model.
+**Decision.** Require the shuffled maximum below **half** the real one and the above-threshold count
+below **a tenth**. Report both as ratios so a marginal result is visible rather than rounded into a
+verdict.
+**Why.** A control whose pass condition is nearly always true is not a control. The near-miss is now a
+regression test.
+**Status.** Active.
+
+### D74 — `MIN_FILMS_TO_REPORT` is 12, measured not chosen
+**Context.** F44 — the synthetic sweep finds +1.00-star effects need 12 films in four of five roles,
++0.75 is recoverable only for editors and only at 12, and **anything at or below +0.50 stars is
+undetectable at every film count this library contains.**
+**Decision.** 12 films.
+**Consequence, accepted.** Only 3 editors, 1 cinematographer, 4 writers and 1 production designer
+qualify; composer has 28. Most roles report one to four names and the insufficient-data bucket is the
+majority of every list. This settles D64 at its pessimistic end.
+**Also.** Stage 2 pooling moves from desirable to necessary: one 1,300-film account cannot resolve
+ordinary crew preferences, only very large ones.
+**Status.** Active.
+
+### D75 — Significance and power are reported separately, never merged
+**Context.** F46 — the sweep says a +0.5 effect is undetectable; the permutation null finds a +0.475
+effect at p = 0.005. Both are correct and they answer different questions.
+**Decision.** Report the p-value *and* the recovery rate at that effect size. The honest sentence is
+"this effect is larger than noise produces, and the procedure that found it would have missed it about
+half the time."
+**Why.** Quoting the p-value alone would imply a reliability the method does not have. Quoting the
+floor alone would imply the finding is noise, which the permutation test contradicts.
+**Status.** Active.
+
+### D76 — The permutation null is over the maximum effect per permutation
+**Decision.** Build the null from the largest effect in each of 200 permutations, not from all effects
+pooled.
+**Why.** Hundreds of people are tested per role, so an individually unlikely value is guaranteed to
+appear somewhere. A null over the maximum is the multiple-comparisons correction: clearing it means
+beating the best that noise achieved anywhere. p-values use the +1 convention so an observed effect is
+never reported as impossible under noise.
+**Status.** Active.
+
+### D77 — Widen the product framing, because the strongest effects are negative
+**Context.** F47 — the largest effect in the library is Brian Tyler at **−0.564**, and all five top
+composers are negative. The model detects dislike more strongly than liking, because a viewer who rates
+blockbusters below consensus generates large negative residuals across a wide, well-sampled set of
+crew, while the films they love are scattered thinly across many people.
+**Decision.** Frame the feature as *the collaborators who move your ratings most, in both directions*,
+not as "your favourite editor".
+**Why.** The alternative is hiding the strongest, best-evidenced finding because it is unflattering,
+which is the same instinct D65-era honesty rules exist to resist.
+**Status.** Active. Affects the Phase 3 UI copy.
