@@ -651,3 +651,45 @@ shortfall.
 **Why.** A 49%-covered role sitting beside a 96%-covered one, unmarked, implies a confidence that does
 not exist.
 **Status.** Active.
+
+---
+
+## Phase: the evaluation harness — 2026-07-26
+
+### D68 — Two metrics: a gate metric and a product metric
+**Context.** F39 — `director_only` already reaches P@20 = 0.950 at threshold 4.0, one film from the
+ceiling, with each film worth 0.05.
+**Decision.** Gate metric is **Precision@100 at ≥4.5** (31 films of headroom, 0.01 granularity, base
+rate 0.300). Product metric stays **Precision@20 at ≥4.0** and is reported beside it.
+**Why.** A saturated metric cannot adjudicate the go/no-go, and the number a user experiences is not
+necessarily the number that can measure a model.
+**Crucially: chosen before the crew model existed.** Picking k after seeing crew results would be
+indistinguishable from picking the k that flattered them. `--grid` prints the full table so the choice
+can be checked.
+**Status.** Active. Supersedes the single-metric decision in D11, which stands in spirit — rank
+metrics over MAE — but was underspecified on k and threshold.
+
+### D69 — The go/no-go is reported against both director-only and the best baseline
+**Context.** F40 — `genre_only` beats `director_only` on the gate metric on both splits.
+**Decision.** Report two comparisons: crew versus `director_only` (the thesis) and crew versus the best
+baseline, currently `genre_only` (usefulness).
+**Why.** The spec treated rung 4 as the bar; it is not the highest rung for this account. Beating the
+director while losing to genre would be a hollow result, and publishing the first without the second
+would mislead.
+**Status.** Active. Refines the gate in `Ariadne.MD` §7.
+
+### D70 — Baselines get the strongest version of themselves
+**Decision.** The popularity baseline fits its own least-squares mapping from TMDB's 0–10 scale rather
+than assuming half. Genre and director baselines use the same shrinkage the real model will.
+**Why.** A baseline built as a strawman proves nothing when beaten. The ladder is only evidence if each
+rung is the best form of its idea.
+**Status.** Active.
+
+### D71 — Never compare a computed aggregate to zero exactly
+**Context.** F42 — `np.full(100, 3.342).std()` is 1.3e-15, so a `std() == 0.0` guard never fired and
+NaN reached Postgres, which rejected the run.
+**Decision.** Test constancy with `min == max`. Pass every float through a finiteness check before it
+enters a JSONB payload.
+**Why.** JSON has no NaN, so one non-finite value makes an entire run unwritable. Losing a measurement
+to a formatting detail is not acceptable.
+**Status.** Active, regression-tested.
