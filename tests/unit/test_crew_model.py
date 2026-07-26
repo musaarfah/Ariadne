@@ -293,3 +293,66 @@ def test_null_uses_the_maximum_per_permutation():
     null = build_null(library(), EDITOR, permutations=12, min_films=8)
     assert len(null.max_effects) == 12
     assert null.percentile(95) >= null.percentile(50)
+
+
+# --- across-role combination -----------------------------------------------------------
+
+
+def test_across_strategies_all_produce_a_prediction():
+    films = library()
+    target = film(0.0, uri="t", editor=1, dp=2)
+
+    seen = {}
+    for across in ("mean", "max", "sum", "sum_scaled"):
+        model = CrewModel(roles=(EDITOR, CINEMATOGRAPHER), across=across)
+        model.fit(films)
+        seen[across] = float(model.predict([target])[0])
+
+    assert len(seen) == 4
+    assert all(np.isfinite(v) for v in seen.values())
+
+
+def test_sum_is_at_least_as_large_as_mean_when_effects_agree():
+    """With every contributing role pointing the same way, summing cannot be smaller."""
+    films = [film(5.0 if i % 3 else 4.5, uri=f"a{i}", editor=1, dp=2) for i in range(14)]
+    films += [
+        film(3.0 + (i % 3) * 0.5, uri=f"b{i}", editor=100 + i, dp=200 + i) for i in range(150)
+    ]
+    target = film(0.0, uri="t", editor=1, dp=2)
+
+    mean_model = CrewModel(roles=(EDITOR, CINEMATOGRAPHER), across="mean")
+    mean_model.fit(films)
+    sum_model = CrewModel(roles=(EDITOR, CINEMATOGRAPHER), across="sum")
+    sum_model.fit(films)
+
+    mean_adj = mean_model.predict([target])[0] - mean_model.expectation_for([target])[0]
+    sum_adj = sum_model.predict([target])[0] - sum_model.expectation_for([target])[0]
+    assert sum_adj >= mean_adj - 1e-9
+
+
+def test_scaled_sum_sits_between_mean_and_sum():
+    films = [film(5.0 if i % 3 else 4.5, uri=f"a{i}", editor=1, dp=2) for i in range(14)]
+    films += [
+        film(3.0 + (i % 3) * 0.5, uri=f"b{i}", editor=100 + i, dp=200 + i) for i in range(150)
+    ]
+    target = film(0.0, uri="t", editor=1, dp=2)
+
+    def adjustment(across: str) -> float:
+        model = CrewModel(roles=(EDITOR, CINEMATOGRAPHER), across=across)
+        model.fit(films)
+        return float(model.predict([target])[0] - model.expectation_for([target])[0])
+
+    assert adjustment("mean") <= adjustment("sum_scaled") + 1e-9
+    assert adjustment("sum_scaled") <= adjustment("sum") + 1e-9
+
+
+def test_unknown_across_strategy_falls_back_to_mean():
+    films = library()
+    target = film(0.0, uri="t", editor=1)
+
+    fallback = CrewModel(roles=(EDITOR,), across="nonsense")
+    fallback.fit(films)
+    default = CrewModel(roles=(EDITOR,), across="mean")
+    default.fit(films)
+
+    assert fallback.predict([target])[0] == pytest.approx(default.predict([target])[0])

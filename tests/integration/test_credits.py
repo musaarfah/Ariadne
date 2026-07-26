@@ -172,3 +172,85 @@ def test_coverage_groups_by_decade_and_region(session: Session, tmp_path):
     report = build_coverage(session, upload.id)
     assert report.decade_films[1970] == 1
     assert report.region_films["US"] == 1
+
+
+# --- cast ------------------------------------------------------------------------------
+
+
+def test_cast_is_stored_from_a_payload_that_also_has_crew(session: Session):
+    payload = godfather_payload()
+    upsert_film(session, payload)
+
+    from ariadne.core.catalog.credits import store_cast
+
+    written = store_cast(session, 238, payload)
+    assert written > 5
+
+    from ariadne.core.catalog.roles import ACTOR, canonical_role
+
+    roles = {
+        canonical_role(department, job)
+        for department, job in session.execute(
+            select(Credit.department, Credit.job).where(Credit.film_id == 238)
+        ).all()
+    }
+    assert ACTOR in roles
+
+
+def test_only_top_billed_cast_is_kept(session: Session):
+    """TMDB lists ~81 cast per film; a fortieth-billed extra says nothing about a rating."""
+    from ariadne.core.catalog.credits import CAST_BILLING_LIMIT, store_cast
+
+    payload = godfather_payload()
+    upsert_film(session, payload)
+    written = store_cast(session, 238, payload)
+
+    assert written <= CAST_BILLING_LIMIT
+    assert len(payload["credits"]["cast"]) > CAST_BILLING_LIMIT
+
+
+def test_storing_cast_is_idempotent(session: Session):
+    from ariadne.core.catalog.credits import store_cast
+
+    payload = godfather_payload()
+    upsert_film(session, payload)
+
+    first = store_cast(session, 238, payload)
+    store_cast(session, 238, payload)
+
+    total = session.scalar(
+        select(func.count()).select_from(Credit).where(Credit.department == "Acting")
+    )
+    assert total == first
+
+
+def test_cast_people_get_rows_so_the_foreign_key_resolves(session: Session):
+    from ariadne.core.catalog.credits import store_cast
+
+    payload = godfather_payload()
+    upsert_film(session, payload)
+    store_cast(session, 238, payload)
+
+    names = set(session.scalars(select(Person.name)))
+    assert "Marlon Brando" in names
+
+
+def test_backfill_reads_cast_from_stored_payloads_without_the_network(session: Session):
+    """The payload was always stored whole; only store_credits ignored the cast half (D98)."""
+    from ariadne.core.catalog.credits import backfill_cast
+
+    upsert_film(session, godfather_payload())
+    processed, written = backfill_cast(session)
+
+    assert processed == 1
+    assert written > 5
+
+
+def test_backfill_skips_films_with_no_stored_credits(session: Session):
+    from ariadne.core.catalog.credits import backfill_cast
+
+    upsert_film(session, {"id": 999, "title": "Bare", "release_date": "2000-01-01"})
+    processed, written = backfill_cast(session)
+
+    assert processed == 0
+    assert written == 0

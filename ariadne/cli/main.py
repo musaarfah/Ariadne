@@ -422,6 +422,31 @@ def credits_command(
     typer.echo(f"elapsed             {elapsed:.1f}s")
 
 
+@app.command("backfill-cast")
+def backfill_cast_command() -> None:
+    """Store cast from payloads already in the database. No API calls.
+
+    `get_movie(append="credits")` returned cast all along and the whole payload went into
+    `films.raw`; only `store_credits` ignored it (D98).
+    """
+    from ariadne.core.catalog.credits import backfill_cast
+
+    def progress(index: int, total: int, processed: int, written: int) -> None:
+        if index % 2000 == 0 or index == total:
+            typer.echo(f"  {index}/{total} films   with cast {processed}   credits {written}")
+
+    started = time.perf_counter()
+    with session_scope() as session:
+        processed, written = backfill_cast(session, on_progress=progress)
+    elapsed = time.perf_counter() - started
+
+    typer.echo("")
+    typer.echo(f"films with a stored payload  {processed}")
+    typer.echo(f"cast credits written         {written}")
+    typer.echo("api calls                    0")
+    typer.echo(f"elapsed                      {elapsed:.1f}s")
+
+
 @app.command("coverage")
 def coverage(token: str = typer.Argument(..., help="Upload token")) -> None:
     """Crew coverage per role, by decade and region."""

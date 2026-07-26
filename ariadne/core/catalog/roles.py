@@ -31,6 +31,11 @@ SOUND_DESIGNER = "sound_designer"
 COSTUME_DESIGNER = "costume_designer"
 CHOREOGRAPHER = "choreographer"
 
+# Cast. Excluded from the research scope on purpose — the thesis is about people a viewer *cannot*
+# name — and included in the product scope, because an actor bar is what gives the crew bar its
+# context (D98). TMDB returns cast without department or job, so both are synthesised at ingest.
+ACTOR = "actor"
+
 
 @dataclass(frozen=True)
 class RoleSpec:
@@ -67,6 +72,8 @@ ROLE_SPECS: tuple[RoleSpec, ...] = (
     RoleSpec(SOUND_DESIGNER, "Sound", frozenset({"Sound Designer"})),
     RoleSpec(COSTUME_DESIGNER, "Costume & Make-Up", frozenset({"Costume Design"})),
     RoleSpec(CHOREOGRAPHER, "Crew", frozenset({"Choreographer"})),
+    # --- cast, product scope only ---
+    RoleSpec(ACTOR, "Acting", frozenset({"Actor"})),
 )
 
 # Deliberately absent: Crew/Stunts is the largest available pool (86 people at 12+ films, 4,931
@@ -87,8 +94,18 @@ EXPANDED_BELOW_THE_LINE = (
 )
 
 # Roles the model uses, in the order they are reported.
+#
+# BELOW_THE_LINE and ALL_ROLES are the *research* scope and must not gain actors: the Stage 1 result
+# compares below-the-line crew against directors, and quietly adding cast would invalidate the
+# comparison the writeup reports.
 BELOW_THE_LINE = EXPANDED_BELOW_THE_LINE
 ALL_ROLES = (DIRECTOR, *BELOW_THE_LINE)
+
+CAST_ROLES = (ACTOR,)
+
+# The *product* scope: everything a person can be credited as. Used by the decomposition and the
+# full-feature recommender, never by the thesis models (D97).
+PRODUCT_ROLES = (*CAST_ROLES, DIRECTOR, *BELOW_THE_LINE)
 
 _BY_KEY = {(spec.department, job): spec.role for spec in ROLE_SPECS for job in spec.jobs}
 

@@ -75,10 +75,17 @@ class CrewModel:
     # therefore in the crew effects. "simple" is kept so the before-and-after can be reported.
     expectation: str = "rich"
 
-    # How a film's several credited people in one role combine into a prediction. "mean" was the
-    # original; 49% of these films credit more than one writer, so a strong person is diluted to a
-    # third. The alternatives are testable through the harness rather than argued about.
+    # How a film's several credited people in ONE role combine. "mean" was the original; 49% of
+    # these films credit more than one writer, so a strong person is diluted to a third.
     combine: str = "mean"
+
+    # How the per-role adjustments combine ACROSS roles — the step that actually matters.
+    #
+    # "mean" was hardcoded until 2026-07-27 and is why adding roles could not help: every role
+    # added is another term in the average, so each one pulls the total adjustment toward zero.
+    # Going from five roles to twelve, then thirteen with cast, lowered the gate rather than
+    # raising it (F70/D103). This is arithmetic, not a fact about any role.
+    across: str = "mean"
 
     # "rating" or "preference". The latter adds a bounded rewatch bonus, a second independent
     # view of the same preference, which matters because the rating scale runs out of resolution
@@ -153,9 +160,24 @@ class CrewModel:
                 if known:
                     per_role.append(self._combine(known))
             if per_role:
-                adjustments[index] = float(np.mean(per_role))
+                adjustments[index] = self._combine_across(per_role)
 
         return base + adjustments
+
+    def _combine_across(self, per_role: list[float]) -> float:
+        """Reduce one adjustment per role to a single number for the film."""
+        if self.across == "max":
+            # The loudest signal, undiluted by roles that happen to be uninformative.
+            return max(per_role, key=abs)
+        if self.across == "sum":
+            # Additive: several liked collaborators are more evidence than one. Risks overshooting
+            # on films crediting many known people, which is what the harness is for.
+            return float(sum(per_role))
+        if self.across == "sum_scaled":
+            # Additive but damped by how many roles contributed, so a film with eleven known people
+            # cannot drift a full star from anything observed.
+            return float(sum(per_role)) / float(np.sqrt(len(per_role)))
+        return float(np.mean(per_role))
 
     def _combine(self, known: list[CrewEffect]) -> float:
         """Reduce several credited people in one role to a single adjustment."""

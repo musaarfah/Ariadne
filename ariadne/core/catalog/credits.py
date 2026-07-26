@@ -104,6 +104,7 @@ def ingest_film_credits(
     upsert_film(session, payload)
 
     credits_written, people_written = store_credits(session, tmdb_id, payload)
+    credits_written += store_cast(session, tmdb_id, payload)
     stats.fetched += 1
     stats.credits_stored += credits_written
     stats.people_stored += people_written
@@ -173,3 +174,94 @@ def ingest_credits_for_upload(
 
 def credit_count(session: Session) -> int:
     return session.scalar(select(func.count()).select_from(Credit)) or 0
+
+
+# --- cast -------------------------------------------------------------------------------
+
+# Only the top-billed are stored. TMDB lists ~81 cast per film and a fortieth-billed extra has no
+# bearing on whether someone liked the film, so storing them would add noise and rows in equal
+# measure. Ten is generous: it reaches well past the leads into recognisable supporting parts.
+CAST_BILLING_LIMIT = 10
+
+# Synthesised, because TMDB cast entries carry `character` and `order` rather than a department and
+# job. Using the same credits table keeps one code path for every kind of credit.
+CAST_DEPARTMENT = "Acting"
+CAST_JOB = "Actor"
+
+
+def store_cast(session: Session, tmdb_id: int, payload: dict[str, Any]) -> int:
+    """Persist a film's top-billed cast. Returns rows written.
+
+    Billing order is deliberately not preserved as a separate role. Splitting leads from supporting
+    parts would give a person two effect estimates on half the evidence each, and sparsity is
+    already the binding constraint. The order remains in `films.raw` if weighting is wanted later.
+    """
+    cast = payload.get("credits", {}).get("cast", [])
+    if not isinstance(cast, list):
+        return 0
+
+    people: dict[int, str] = {}
+    rows: list[dict[str, Any]] = []
+    seen: set[int] = set()
+
+    for member in cast:
+        person_id = member.get("id")
+        name = member.get("name")
+        order = member.get("order")
+        if not isinstance(person_id, int) or not isinstance(name, str):
+            continue
+        if not isinstance(order, int) or order >= CAST_BILLING_LIMIT:
+            continue
+        if person_id in seen:
+            continue
+
+        seen.add(person_id)
+        people[person_id] = name
+        rows.append(
+            {
+                "film_id": tmdb_id,
+                "person_id": person_id,
+                "department": CAST_DEPARTMENT,
+                "job": CAST_JOB,
+            }
+        )
+
+    if people:
+        session.execute(
+            insert(Person)
+            .values([{"tmdb_id": pid, "name": name} for pid, name in people.items()])
+            .on_conflict_do_nothing(index_elements=["tmdb_id"]),
+        )
+    if rows:
+        session.execute(insert(Credit).values(rows).on_conflict_do_nothing(constraint="uq_credit"))
+    session.flush()
+    return len(rows)
+
+
+def backfill_cast(session: Session, on_progress: Any = None) -> tuple[int, int]:
+    """Store cast for every film whose raw payload already carries it.
+
+    Costs nothing: `get_movie(append="credits")` returned cast all along and the whole payload was
+    written to `films.raw`. Only `store_credits` ignored it, so roughly 100,000 credits have been
+    sitting in the database unused (D98).
+
+    Returns (films processed, credits written).
+    """
+    from ariadne.db.models import Film
+
+    film_ids = list(session.scalars(select(Film.tmdb_id).order_by(Film.tmdb_id)))
+    written = 0
+    processed = 0
+
+    for index, tmdb_id in enumerate(film_ids, start=1):
+        film = session.get(Film, tmdb_id)
+        if film is None or not film.raw:
+            continue
+        if "credits" not in film.raw:
+            continue
+        written += store_cast(session, tmdb_id, film.raw)
+        processed += 1
+        if on_progress is not None:
+            on_progress(index, len(film_ids), processed, written)
+
+    return processed, written

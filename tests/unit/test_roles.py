@@ -100,3 +100,32 @@ def test_every_spec_is_reachable():
     for spec in ROLE_SPECS:
         for job in spec.jobs:
             assert canonical_role(spec.department, job) == spec.role
+
+
+# --- cast, product scope only ----------------------------------------------------------
+
+
+def test_actor_is_recognised():
+    from ariadne.core.catalog.roles import ACTOR
+
+    assert canonical_role("Acting", "Actor") == ACTOR
+
+
+def test_actor_is_absent_from_the_research_scope():
+    """The Stage 1 result compares below-the-line crew against directors.
+
+    Quietly adding cast to either grouping would invalidate the comparison the writeup reports, so
+    this is a guard rather than a preference (D97).
+    """
+    from ariadne.core.catalog.roles import ACTOR, ALL_ROLES, BELOW_THE_LINE
+
+    assert ACTOR not in BELOW_THE_LINE
+    assert ACTOR not in ALL_ROLES
+
+
+def test_actor_is_present_in_the_product_scope():
+    from ariadne.core.catalog.roles import ACTOR, DIRECTOR, PRODUCT_ROLES
+
+    assert ACTOR in PRODUCT_ROLES
+    assert DIRECTOR in PRODUCT_ROLES
+    assert set(BELOW_THE_LINE) < set(PRODUCT_ROLES)
