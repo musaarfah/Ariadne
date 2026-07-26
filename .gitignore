@@ -1,0 +1,43 @@
+# --- Personal data. NEVER commit. ---
+# Letterboxd exports contain email address, real name and location in profile.csv
+letterboxd-*/
+exports/
+*.zip
+
+# Per-user derived data
+data/users/
+data/*.db-journal
+
+# Cached TMDB responses (large, regenerable, but keep out of history)
+data/cache/
+data/catalog.db
+
+# Generated output
+reports/
+*.png
+*.svg
+
+# --- Internal design docs and working instructions. Untracked by choice. ---
+# research/ is deliberately NOT ignored — it holds shareable results and the
+# git-timestamped pre-registration (Ariadne.MD §10).
+docs/
+CLAUDE.md
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
