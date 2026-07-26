@@ -211,6 +211,23 @@ class DiaryEntry(Base):
     __table_args__ = (Index("ix_diary_upload", "upload_id"),)
 
 
+class Like(Base):
+    """Liked films — a positive-only signal, separate from ratings.
+
+    Stored even though nothing reads it until the Phase 1.7 ablation: uploads are kept so a
+    run can be re-analysed when the model improves, and a participant's export cannot be
+    re-requested later without asking them again.
+    """
+
+    __tablename__ = "likes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    upload_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("uploads.id", ondelete="CASCADE"))
+    letterboxd_uri: Mapped[str] = mapped_column(String(200))
+
+    __table_args__ = (Index("ix_likes_upload", "upload_id"),)
+
+
 # --- results ---------------------------------------------------------------------------
 
 
