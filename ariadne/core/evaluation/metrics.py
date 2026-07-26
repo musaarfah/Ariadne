@@ -10,6 +10,7 @@ threshold anyway. Without it the number is uninterpretable: 0.70 is excellent if
 liked and worthless if 70% are.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -164,6 +165,24 @@ def score(predicted: np.ndarray, actual: np.ndarray, k: int = DEFAULT_K) -> Metr
     )
 
 
+def variance_explained(predicted: np.ndarray, actual: np.ndarray) -> float:
+    """The share of the variation in ratings the predictions account for.
+
+    Reported by the decomposition, where the question is "how much of your rating is explained by
+    this kind of information" rather than "would these recommendations be good". Precision cannot
+    answer the first: it looks only at the top of the ranking and ignores every other film.
+
+    Not clipped at zero. A layer can genuinely make predictions worse than the mean, and a negative
+    number is the honest way to say so.
+    """
+    if len(actual) < 2:
+        return 0.0
+    total = float(np.sum((actual - actual.mean()) ** 2))
+    if total == 0.0:
+        return 0.0
+    return 1.0 - float(np.sum((actual - predicted) ** 2)) / total
+
+
 def precision_grid(predicted: np.ndarray, actual: np.ndarray) -> dict[float, dict[int, float]]:
     """P@k across thresholds and k, so the chosen configuration can be checked."""
     return {
@@ -226,19 +245,25 @@ def compare(
     threshold: float = GATE_THRESHOLD,
     resamples: int = BOOTSTRAP_RESAMPLES,
     seed: int = 20260726,
+    metric: Callable[[np.ndarray, np.ndarray], float] | None = None,
 ) -> Comparison:
+    """Paired bootstrap on the difference between two predictors.
+
+    `metric` defaults to the gate precision. Any function of (predicted, actual) works, so the same
+    resampling serves both the gate comparison and the decomposition's variance-explained layers.
+    """
+    scorer = metric or (lambda p, a: precision_at_k(p, a, k, threshold))
+
     rng = np.random.default_rng(seed)
     n = len(actual)
-    observed = precision_at_k(predicted_a, actual, k, threshold) - precision_at_k(
-        predicted_b, actual, k, threshold
-    )
+    observed = scorer(predicted_a, actual) - scorer(predicted_b, actual)
 
     diffs = np.empty(resamples, dtype=float)
     for index in range(resamples):
         pick = rng.integers(0, n, n)
-        diffs[index] = precision_at_k(
-            predicted_a[pick], actual[pick], k, threshold
-        ) - precision_at_k(predicted_b[pick], actual[pick], k, threshold)
+        diffs[index] = scorer(predicted_a[pick], actual[pick]) - scorer(
+            predicted_b[pick], actual[pick]
+        )
 
     return Comparison(
         name_a=name_a,

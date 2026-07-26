@@ -24,6 +24,7 @@ from ariadne.core.evaluation.metrics import (
 )
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
+from ariadne.core.recommend.decomposition import DECOMPOSITION_RESAMPLES, decompose
 from ariadne.core.taste.crew import MIN_FILMS_TO_REPORT, CrewModel
 from ariadne.db.models import AnalysisRun, CrewEffect, Upload
 from ariadne.db.session import get_engine, session_scope
@@ -741,6 +742,70 @@ def filmographies(
     typer.echo(f"skipped, few votes  {stats.skipped_low_votes}")
     typer.echo(f"requests            {client.request_count} ({client.retry_count} retried)")
     typer.echo(f"elapsed             {elapsed:.1f}s")
+
+
+@app.command("decompose")
+def decompose_command(
+    token: str = typer.Argument(..., help="Upload token"),
+    resamples: int = typer.Option(DECOMPOSITION_RESAMPLES, help="Paired bootstrap resamples"),
+) -> None:
+    """What explains your taste. Tier 2 — every number carries an interval.
+
+    Contributions are marginal: each layer is added alone to the same consensus base, so no number
+    depends on the order the layers are listed in. They therefore do not sum to the total, and the
+    overlap is reported rather than hidden.
+    """
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+    for report in decompose(films, resamples=resamples):
+        typer.echo("")
+        typer.echo(f"=== {report.split}   test {report.test_n} films")
+        typer.echo(f"  {report.note}")
+        typer.echo("")
+        typer.echo(
+            f"  What everyone else thought of the film explains "
+            f"{report.base_explained:.1%} of the variation in your ratings on its own"
+            f"  (gate {report.base_gate:.3f})."
+        )
+        typer.echo("  Everything below is what each kind of information adds to that:")
+        typer.echo("")
+        typer.echo(f"  {'':<26}{'explained':>10} {'95% CI':>17}{'gate':>9} {'95% CI':>17}")
+
+        for layer in report.layers:
+            explained, ranking = layer.explained, layer.ranking
+            verdict = "clears zero" if layer.helps else ("makes it worse" if layer.hurts else "")
+            typer.echo(
+                f"  {layer.label:<26}{explained.observed_diff:>+10.3f} "
+                f"[{explained.ci_low:>+6.3f},{explained.ci_high:>+6.3f}]"
+                f"{ranking.observed_diff:>+9.3f} "
+                f"[{ranking.ci_low:>+6.3f},{ranking.ci_high:>+6.3f}]  {verdict}"
+            )
+
+        combined = report.combined
+        if combined is not None:
+            typer.echo("")
+            typer.echo(
+                f"  {'all of them together':<26}{combined.explained.observed_diff:>+10.3f} "
+                f"[{combined.explained.ci_low:>+6.3f},{combined.explained.ci_high:>+6.3f}]"
+                f"{combined.ranking.observed_diff:>+9.3f} "
+                f"[{combined.ranking.ci_low:>+6.3f},{combined.ranking.ci_high:>+6.3f}]"
+            )
+            typer.echo(
+                f"  the layers measured one at a time sum to {report.sum_of_layers:+.3f}, so "
+                f"{report.overlap:+.3f} of that is the same information counted twice"
+            )
+
+    typer.echo("")
+    typer.echo("Explained = share of the variation in held-out ratings, over every film.")
+    typer.echo("Gate = Precision@100 at >= 4.5, over the top 100 only. A layer can move one and")
+    typer.echo(
+        "not the other: explaining a rating and improving a recommendation are different jobs."
+    )
 
 
 @app.command("portrait")

@@ -11,12 +11,13 @@ the thesis is false and that is the finding.
 """
 
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
 
-from ariadne.core.catalog.roles import DIRECTOR
+from ariadne.core.catalog.roles import ACTOR, DIRECTOR
 from ariadne.core.evaluation.dataset import RatedFilm
 from ariadne.core.taste.expectation import (
     AnyExpectation,
@@ -97,10 +98,19 @@ class _PersonEffects:
     a person cannot look preferred merely for working on well-regarded films (D6).
     """
 
-    def __init__(self, name: str, description: str, role: str | None, expectation: str = "rich"):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        role: str | None,
+        expectation: str | Callable[[list[RatedFilm]], AnyExpectation] = "rich",
+    ):
         self.name = name
         self.description = description
         self._role = role
+        # Either of the two standard expectations by name, or a factory. The decomposition needs
+        # person effects measured against a context model with some features ablated, and a second
+        # copy of the shrinkage-on-residuals machinery is how two versions of it drift apart.
         self._expectation_kind = expectation
         self._expectation: AnyExpectation | None = None
         self._effects: dict[int, float] = {}
@@ -110,11 +120,12 @@ class _PersonEffects:
         return film.people_in(self._role)
 
     def fit(self, train: list[RatedFilm]) -> None:
-        self._expectation = (
-            fit_rich_expectation(train)
-            if self._expectation_kind == "rich"
-            else fit_expectation(train)
-        )
+        if callable(self._expectation_kind):
+            self._expectation = self._expectation_kind(train)
+        elif self._expectation_kind == "rich":
+            self._expectation = fit_rich_expectation(train)
+        else:
+            self._expectation = fit_expectation(train)
         residuals = self._expectation.residuals(train)
 
         grouped: dict[int, list[float]] = defaultdict(list)
@@ -140,10 +151,22 @@ class _PersonEffects:
 
 
 class GenreOnly(_PersonEffects):
-    """Rung 3: shrunken genre effects over the popularity expectation."""
+    """Rung 3: shrunken genre effects over the popularity expectation.
+
+    Deliberately built on the *simple* expectation. On the rich one this rung was degenerate — genre
+    is already a feature there, so it fitted genre effects on residuals from a model that had
+    already used genre, and scored identically to `context` (D84). The rung then measured nothing
+    and could not take its place in the decomposition, which needs each layer to add one thing
+    (D108).
+    """
 
     def __init__(self) -> None:
-        super().__init__("genre_only", "shrunken genre effects on residuals", role=None)
+        super().__init__(
+            "genre_only",
+            "shrunken genre effects on the popularity expectation",
+            role=None,
+            expectation="simple",
+        )
         self._genre_ids: dict[str, int] = {}
 
     def _keys(self, film: RatedFilm) -> tuple[int, ...]:
@@ -160,6 +183,18 @@ class DirectorOnly(_PersonEffects):
 
     def __init__(self) -> None:
         super().__init__("director_only", "shrunken director effects on residuals", role=DIRECTOR)
+
+
+class CastOnly(_PersonEffects):
+    """Shrunken actor effects. Not a research rung — cast is product scope only (D97).
+
+    Present because the decomposition has to answer "how much of my taste is the cast", which is the
+    question users actually ask, and because it is the one person-layer with enough recurrence to
+    clear the 12-film threshold in numbers (F69).
+    """
+
+    def __init__(self) -> None:
+        super().__init__("cast_only", "shrunken actor effects on residuals", role=ACTOR)
 
 
 def ladder() -> list[Predictor]:

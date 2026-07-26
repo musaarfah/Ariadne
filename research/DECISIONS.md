@@ -1102,3 +1102,60 @@ was, and a two-letter country code next to a decade invites misreading one as th
 and it keeps the single ranked list rather than splitting into three shorter ones that would hide the fact
 that country dominates the top of this user's list.
 **Status.** Active.
+
+### D108 — The genre rung is rebuilt on the popularity expectation
+**Context.** D84 added a `context` rung and noted that `genre_only` had become degenerate against it.
+The note was left in the docs and the rung was left in the ladder.
+**Measured.** The two predictors agree to 0.0000 maximum absolute difference over 527 held-out films. It
+was not nearly degenerate, it was the same model — genre effects fitted on residuals from an expectation
+that already contains genre have nothing to explain.
+**Decision.** Build `GenreOnly` on the simple expectation, which is what its docstring always claimed.
+Gate goes 0.660 → 0.740 on the temporal split, matching the number in the published tables.
+**Why now.** The decomposition needs each layer to add exactly one thing. A rung that silently duplicates
+its neighbour would have appeared as a layer contributing zero, and I would have reported that as a
+finding about genre.
+**Lesson.** A degeneracy noticed in prose and not fixed in code is a bug with documentation. D84's note
+described the defect accurately and left it in the ladder for three days.
+**Status.** Active. F75.
+
+### D109 — A base score must be reported in the same metric as the differences measured against it
+**What happened.** `Decomposition.base_gate` called `precision_at_k` on its defaults — P@20 at >= 4.0 —
+while every layer difference beside it was a difference in P@100 at >= 4.5. The base printed 0.800 next to
+layers moving a number whose actual value was 0.680.
+**Why it survived.** Both numbers are precisions, both are plausible, and the wrong one was *higher* —
+0.800 read as the strongest baseline the project had produced, which is exactly the kind of number that
+does not get questioned.
+**Decision.** Pass the gate configuration explicitly. A regression test asserts `base_gate` equals the gate
+metric and is *not* equal to the default-argument value, so restoring the bug fails the suite.
+**Pattern.** Fifth instance of a derived quantity computed in the wrong regime, after D71, D82, D95 and
+D101. All five were default arguments or unexcluded ranges rather than wrong formulas.
+**Status.** Active.
+
+### D110 — The decomposition reports marginal contributions and prints the overlap
+**Options.** A sequential chain — each layer added to the last — gives contributions that sum to the total,
+but every number then depends on the order the layers are listed in, and the order would be a design choice
+presented as a result. Marginal contributions — each layer added alone to the same base — are
+order-independent but do not sum.
+**Decision.** Marginal, and print the gap. On the temporal split the layers sum to +0.119 while all of them
+together deliver +0.036, so +0.083 is the same information counted twice.
+**Consequence for the UI.** The layers are bars against a common base, never segments of a whole. No pie
+chart, no stacked bar, no "your taste is 30% director" — that phrasing would overstate the total
+threefold (F78).
+**Status.** Active.
+
+### D111 — The decomposition leads with variance explained, not the gate metric
+**Context.** The project's canonical primary metric is Precision@20, with the gate at P@100 >= 4.5, on the
+grounds that the product ranks and MAE rewards predicting 3.5 forever (D11). That reasoning is about
+whether recommendations are good.
+**The decomposition asks a different question** — how much of a rating is accounted for by a kind of
+information — and precision cannot answer it, because it looks only at the top of the ranking and ignores
+every other film.
+**Measured.** Across eight context-feature subsets, variance explained rises monotonically with features
+while the gate wanders 0.640–0.700 with no relationship to it (F79). No gate interval for any layer clears
+zero on either split. Six ranking numbers that are all noise, reported as results, would be the exact
+failure the gate metric was chosen to prevent.
+**Decision.** Report variance explained first and the gate beside it, with both intervals, and state
+plainly that a layer can move one and not the other. This does not change the primary metric anywhere
+else: the go/no-go, the ladder and the writeup stay on the gate.
+**Status.** Active. Narrow reversal of D11, scoped to the decomposition only.
+

@@ -35,6 +35,10 @@ RICH_ALPHA = 10.0
 # Below this many films the indicators outnumber anything they could learn from.
 MIN_FILMS_FOR_RICH = 20
 
+# The categorical blocks of the rich expectation, each droppable. The decomposition measures what
+# each one contributes by fitting the model without it; the full model uses all three.
+CONTEXT_FEATURES = ("decade", "country", "genre")
+
 
 @dataclass(frozen=True)
 class Expectation:
@@ -144,8 +148,17 @@ class RichExpectation:
         return result
 
 
-def fit_rich_expectation(train: list[RatedFilm], target: str = "rating") -> RichExpectation:
-    """Fit the context model. Categories come from the training block only."""
+def fit_rich_expectation(
+    train: list[RatedFilm],
+    target: str = "rating",
+    features: tuple[str, ...] = CONTEXT_FEATURES,
+) -> RichExpectation:
+    """Fit the context model. Categories come from the training block only.
+
+    `features` selects which categorical blocks are included. Consensus — vote_average, vote_count
+    and the missing-average flag — is always present, so `features=()` is the consensus-only model
+    the decomposition measures everything else against.
+    """
     ratings = target_values(train, target)
     fallback = float(ratings.mean()) if len(ratings) else 0.0
 
@@ -153,9 +166,15 @@ def fit_rich_expectation(train: list[RatedFilm], target: str = "rating") -> Rich
         return RichExpectation(fallback=fallback)
 
     model = RichExpectation(
-        countries=tuple(sorted({film.country or "??" for film in train})),
-        decades=tuple(sorted({(film.year // 10) * 10 if film.year else 0 for film in train})),
-        genres=tuple(sorted({genre for film in train for genre in film.genres})),
+        countries=tuple(sorted({film.country or "??" for film in train}))
+        if "country" in features
+        else (),
+        decades=tuple(sorted({(film.year // 10) * 10 if film.year else 0 for film in train}))
+        if "decade" in features
+        else (),
+        genres=tuple(sorted({genre for film in train for genre in film.genres}))
+        if "genre" in features
+        else (),
         fallback=fallback,
         use_diary_flag=target == "preference",
     )
