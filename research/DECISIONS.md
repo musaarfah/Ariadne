@@ -953,3 +953,70 @@ framing is honest yet.
 **Why.** Fixing it properly means resolving each candidate's director *before* ranking rather than after,
 which reorders the pipeline. Worth doing; not worth doing hastily at the end of a phase.
 **Status.** Open. The clearest remaining flaw in the recommender.
+
+---
+
+## Phase: the product reframe — 2026-07-27
+
+### D97 — Research scope and product scope are separated
+**Context.** Stage 1 finished and the product it implied was weak: one to four names per role, most of
+them absorbed by directors, and a recommender whose adjustments barely moved a ranking.
+**Diagnosis.** Phase 1 deliberately restricted the feature space to below-the-line crew, excluding
+directors and cast, in order to test one falsifiable claim. Crew effects run about ±0.3 stars while the
+**Japanese-cinema residual alone was +0.744**. Country beats every crew member in this library. The
+product was being assembled from the weakest signals in the data **on purpose**.
+**Decision.** The thesis test is complete and written up. The product now uses every available feature;
+the research question keeps its restricted scope.
+**Why this is not a retreat.** The restriction was correct for the thesis and wrong for a product. Nothing
+in the writeup changes. The crew result becomes one component of a larger picture rather than the whole of
+it.
+**Status.** Active. `Ariadne.MD` §5 reframed; Phase 1.10 created.
+
+### D98 — Cast is included in the product, having been excluded from the research
+**Context.** `store_credits` reads only `crew` from a payload that also carries ~81 cast entries per film.
+Across 1,272 films that is roughly **100,000 credits already fetched and discarded**.
+**Decision.** Store cast. Use it in the decomposition and the recommender.
+**Why the original exclusion was right, and now is not.** Cast was excluded because "everyone knows their
+favourite actor" — true, and irrelevant. Actors recur far more than editors, so they clear the 12-film
+threshold in numbers no crew role can, which is what makes the recommender move. And an actor bar in the
+decomposition is what gives the crew bar its context: "crew matters less than cast for you" is a real
+finding, unavailable while cast is absent.
+**Status.** Active. Phase 1.10a.
+
+### D99 — Three confidence tiers, displayed differently, as a product surface
+**Context.** The product needs to feel revelatory without drifting into astrology.
+**Decision.**
+
+| tier | what | uncertainty |
+|---|---|---|
+| 1 — fact | counts, direct observations | none |
+| 2 — measured | rankings, effects, comparisons | always an interval |
+| 3 — cannot determine | explicit refusal, plus the cost of an answer | n/a |
+
+**Why it resolves the tension.** **Most of the revelation lives in tier 1**, where there is nothing to be
+uncertain about — "you have watched 40 films featuring one singer's voice" is simply true. The uncertainty
+attaches only to causal and ranking claims, where it belongs. So the engaging parts need no hedging and
+the hedged parts are the ones that deserve it.
+**Tier 3 is a feature, not a disclaimer.** No competitor tells a user what it cannot work out, and doing
+so is the clearest available signal that the tier 2 numbers mean something.
+**Status.** Active.
+
+### D100 — The headline becomes "what your library knows about you", not "your favourite editor"
+**Context.** "Your favourite editor" is a claim the data can barely support: three editors clear the
+threshold, and the best-evidenced one keeps 24% of her effect once her director competes.
+**Decision.** Lead with tier-1 revelation — stated versus revealed preference, people followed unknowingly,
+disagreements with the world, blind spots. The decomposition sits underneath as the analytical section.
+**Why.** The same library supports the new framing abundantly while barely supporting the old one. And
+under the new framing a negative result is content: "crew explains almost nothing for you" is interesting,
+where previously it was a failure.
+**Status.** Active.
+
+### D101 — Residual-based features need a minimum vote count
+**Context.** The first "your boldest opinions" prototype returned `Aag Lagay Basti Mein — you 3.5, world
+0.0/10` as the top result. Those films have **no votes at all**, so `vote_average` is 0 and the residual is
+an artefact of missing data rather than a bold opinion.
+**Decision.** Any feature built on residuals applies a minimum vote count.
+**Why.** Fourth instance of the same class of bug (D71 float equality, D82 near-zero ratio, D95
+unknown-as-unfamiliar): a derived quantity computed in a regime the code never excluded. Left unfixed it
+would confidently show users nonsense, in public.
+**Status.** Active.
