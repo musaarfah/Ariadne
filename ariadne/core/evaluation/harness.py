@@ -14,12 +14,12 @@ from typing import Any
 import numpy as np
 
 from ariadne.constants import RANDOM_SEED
-from ariadne.core.evaluation.baselines import Predictor, ladder
+from ariadne.core.evaluation.baselines import Predictor, full_ladder
 from ariadne.core.evaluation.dataset import RatedFilm
 from ariadne.core.evaluation.metrics import DEFAULT_K, Metrics, score
 from ariadne.core.evaluation.splits import Drift, Split, random_split, temporal_split
 
-MODEL_VERSION = "1.6-baselines"
+MODEL_VERSION = "1.8-gate"
 
 
 @dataclass
@@ -91,7 +91,7 @@ def evaluate(
     k: int = DEFAULT_K,
 ) -> list[SplitResult]:
     """Score every predictor on both splits. Temporal first: it is the honest headline."""
-    chosen = ladder() if predictors is None else predictors
+    chosen = full_ladder() if predictors is None else predictors
     return [
         evaluate_split(temporal_split(films), chosen, k=k),
         evaluate_split(random_split(films), chosen, k=k),

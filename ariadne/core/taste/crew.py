@@ -21,7 +21,11 @@ import numpy as np
 
 from ariadne.core.catalog.roles import BELOW_THE_LINE, DIRECTOR
 from ariadne.core.evaluation.dataset import RatedFilm
-from ariadne.core.taste.expectation import Expectation, fit_expectation
+from ariadne.core.taste.expectation import (
+    AnyExpectation,
+    fit_expectation,
+    fit_rich_expectation,
+)
 from ariadne.core.taste.shrinkage import ShrunkEffect, shrink
 
 # Below this many films a person's effect goes in the insufficient-data bucket rather than being
@@ -66,16 +70,35 @@ class CrewModel:
     """
 
     roles: tuple[str, ...] = BELOW_THE_LINE
+
+    # "rich" corrects a +0.744-star regional bias that the simple model left in the residuals, and
+    # therefore in the crew effects. "simple" is kept so the before-and-after can be reported.
+    expectation: str = "rich"
+
+    # How a film's several credited people in one role combine into a prediction. "mean" was the
+    # original; 49% of these films credit more than one writer, so a strong person is diluted to a
+    # third. The alternatives are testable through the harness rather than argued about.
+    combine: str = "mean"
+
+    # "rating" or "preference". The latter adds a bounded rewatch bonus, a second independent
+    # view of the same preference, which matters because the rating scale runs out of resolution
+    # exactly where the gate metric operates (F4).
+    target: str = "rating"
+
     name: str = "crew"
     description: str = "shrunken below-the-line crew effects on residuals"
 
-    _expectation: Expectation | None = field(default=None, repr=False)
+    _expectation: AnyExpectation | None = field(default=None, repr=False)
     _effects: dict[str, dict[int, CrewEffect]] = field(default_factory=dict, repr=False)
     _directors_of_person: dict[str, dict[int, list[int]]] = field(default_factory=dict, repr=False)
 
     def fit(self, train: list[RatedFilm]) -> None:
-        self._expectation = fit_expectation(train)
-        residuals = self._expectation.residuals(train)
+        self._expectation = (
+            fit_rich_expectation(train, self.target)
+            if self.expectation == "rich"
+            else fit_expectation(train, self.target)
+        )
+        residuals = self._expectation.residuals(train, self.target)
 
         self._effects = {}
         self._directors_of_person = {}
@@ -123,20 +146,49 @@ class CrewModel:
             per_role: list[float] = []
             for role in self.roles:
                 known = [
-                    self._effects[role][p].effect
+                    self._effects[role][p]
                     for p in film.people_in(role)
                     if p in self._effects.get(role, {})
                 ]
                 if known:
-                    per_role.append(float(np.mean(known)))
+                    per_role.append(self._combine(known))
             if per_role:
                 adjustments[index] = float(np.mean(per_role))
 
         return base + adjustments
 
+    def _combine(self, known: list[CrewEffect]) -> float:
+        """Reduce several credited people in one role to a single adjustment."""
+        values = [e.effect for e in known]
+        if self.combine == "max":
+            # The strongest voice rather than the average, so one distinctive collaborator is not
+            # diluted by co-credits.
+            return max(values, key=abs)
+        if self.combine == "weighted":
+            # Inverse-variance weighting: people measured on more films count for more.
+            weights = [1.0 / max(e.stderr, 1e-6) ** 2 for e in known]
+            total = sum(weights)
+            return sum(v * w for v, w in zip(values, weights, strict=True)) / total
+        return float(np.mean(values))
+
     def effects(self, role: str) -> list[CrewEffect]:
         """Every person fitted in a role, strongest effect first."""
         return sorted(self._effects.get(role, {}).values(), key=lambda e: -abs(e.effect))
+
+    def expectation_for(self, films: list[RatedFilm]) -> np.ndarray:
+        """The expectation alone, so callers can separate it from the crew adjustment."""
+        if self._expectation is None:
+            raise RuntimeError("fit before predict")
+        return self._expectation.predict(films)
+
+    def effect_for(self, role: str, person_id: int) -> float | None:
+        """A person's fitted effect, or None if they were never seen in this role.
+
+        Not restricted to reportable people: an effect too thin to publish is still the best
+        estimate available for walking the graph through them (D65).
+        """
+        effect = self._effects.get(role, {}).get(person_id)
+        return None if effect is None else effect.effect
 
     def reportable_effects(self, role: str) -> list[CrewEffect]:
         return [e for e in self.effects(role) if e.reportable]

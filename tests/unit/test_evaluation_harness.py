@@ -17,6 +17,7 @@ from ariadne.core.evaluation.baselines import (
     GenreOnly,
     GlobalMean,
     Popularity,
+    full_ladder,
     ladder,
 )
 from ariadne.core.evaluation.dataset import RatedFilm
@@ -337,7 +338,29 @@ def test_genre_baseline_learns_a_preference():
 
 def test_ladder_is_ordered_floor_first():
     names = [p.name for p in ladder()]
-    assert names == ["global_mean", "popularity", "genre_only", "director_only"]
+    assert names == ["global_mean", "popularity", "context", "genre_only", "director_only"]
+
+
+def test_context_baseline_exists_so_the_crew_model_is_not_credited_for_it():
+    """The crew model uses the rich expectation, so a baseline must use it too.
+
+    Without this rung, moving from the simple to the rich expectation would show up as a crew
+    improvement when it is really just a better baseline showing through.
+    """
+    assert "context" in [p.name for p in ladder()]
+
+
+def test_full_ladder_adds_both_crew_tracks_after_the_baselines():
+    """Both exclude directors, so beating director_only tests the actual claim."""
+    from ariadne.core.catalog.roles import DIRECTOR
+
+    baselines = [p.name for p in ladder()]
+    names = [p.name for p in full_ladder()]
+    assert names[: len(baselines)] == baselines
+    assert names[len(baselines) :] == ["crew", "crew_ridge"]
+
+    for predictor in full_ladder()[len(baselines) :]:
+        assert DIRECTOR not in predictor.roles  # type: ignore[attr-defined]
 
 
 # --- harness ---------------------------------------------------------------------------
@@ -359,7 +382,7 @@ def test_evaluate_scores_every_predictor_on_both_splits():
     results = evaluate(_dataset())
     assert [r.split.split("@")[0] for r in results] == ["temporal", "random"]
     for split in results:
-        assert [r.name for r in split.results] == [p.name for p in ladder()]
+        assert [r.name for r in split.results] == [p.name for p in full_ladder()]
 
 
 def test_evaluate_finds_the_planted_director_effect():

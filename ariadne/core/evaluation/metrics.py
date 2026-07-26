@@ -170,3 +170,82 @@ def precision_grid(predicted: np.ndarray, actual: np.ndarray) -> dict[float, dic
         threshold: {k: precision_at_k(predicted, actual, k, threshold) for k in GRID_KS}
         for threshold in GRID_THRESHOLDS
     }
+
+
+# --- comparing two predictors -----------------------------------------------------------
+
+# Resamples for the paired bootstrap. Enough for a stable 95% interval on a difference.
+BOOTSTRAP_RESAMPLES = 2000
+
+
+@dataclass(frozen=True)
+class Comparison:
+    """Whether one predictor really beats another, or whether the gap is sampling noise.
+
+    The gate metric is Precision@100 on a test set of a few hundred films, so a difference of five
+    films is roughly one standard error. Reporting such a gap as a result without an interval would
+    be the single easiest way to overclaim in this entire project.
+
+    Paired resampling: both predictors are scored on the *same* resampled test set each time, so the
+    interval reflects uncertainty in the difference rather than in each score separately.
+    """
+
+    name_a: str
+    name_b: str
+    observed_diff: float
+    ci_low: float
+    ci_high: float
+    prob_a_better: float
+    resamples: int
+
+    @property
+    def significant(self) -> bool:
+        """True when the interval excludes zero."""
+        return self.ci_low > 0.0 or self.ci_high < 0.0
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "a": self.name_a,
+            "b": self.name_b,
+            "observed_diff": round(_finite(self.observed_diff), 4),
+            "ci95_low": round(_finite(self.ci_low), 4),
+            "ci95_high": round(_finite(self.ci_high), 4),
+            "prob_a_better": round(_finite(self.prob_a_better), 4),
+            "resamples": self.resamples,
+            "significant": self.significant,
+        }
+
+
+def compare(
+    name_a: str,
+    predicted_a: np.ndarray,
+    name_b: str,
+    predicted_b: np.ndarray,
+    actual: np.ndarray,
+    k: int = GATE_K,
+    threshold: float = GATE_THRESHOLD,
+    resamples: int = BOOTSTRAP_RESAMPLES,
+    seed: int = 20260726,
+) -> Comparison:
+    rng = np.random.default_rng(seed)
+    n = len(actual)
+    observed = precision_at_k(predicted_a, actual, k, threshold) - precision_at_k(
+        predicted_b, actual, k, threshold
+    )
+
+    diffs = np.empty(resamples, dtype=float)
+    for index in range(resamples):
+        pick = rng.integers(0, n, n)
+        diffs[index] = precision_at_k(
+            predicted_a[pick], actual[pick], k, threshold
+        ) - precision_at_k(predicted_b[pick], actual[pick], k, threshold)
+
+    return Comparison(
+        name_a=name_a,
+        name_b=name_b,
+        observed_diff=float(observed),
+        ci_low=float(np.percentile(diffs, 2.5)),
+        ci_high=float(np.percentile(diffs, 97.5)),
+        prob_a_better=float((diffs > 0).mean()),
+        resamples=resamples,
+    )

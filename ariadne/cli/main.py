@@ -544,14 +544,14 @@ def evaluate_command(
     if grid:
         import numpy as np
 
-        from ariadne.core.evaluation.baselines import ladder
+        from ariadne.core.evaluation.baselines import full_ladder
         from ariadne.core.evaluation.splits import temporal_split
 
         grid_split = temporal_split(films)
         actual = np.array([f.rating for f in grid_split.test], dtype=float)
         typer.echo("")
         typer.echo("=== P@k grid, temporal split ===")
-        for predictor in ladder():
+        for predictor in full_ladder():
             predictor.fit(grid_split.train)
             table = precision_grid(predictor.predict(grid_split.test), actual)
             typer.echo(f"  {predictor.name}")
@@ -668,6 +668,332 @@ def fit(
         typer.echo("effects saved to crew_effects")
 
 
+@app.command("filmographies")
+def filmographies(
+    token: str = typer.Argument(..., help="Upload token"),
+    min_films: int = typer.Option(3, "--min-films", help="Films in the library to qualify"),
+    limit: int | None = typer.Option(None, "--limit", help="Only the first N people"),
+) -> None:
+    """Fetch what else the library's crew have worked on, so recommendations have candidates."""
+    from ariadne.core.catalog.filmography import (
+        FilmographyStats,
+        fetch_genre_map,
+        ingest_filmographies,
+        people_worth_traversing,
+    )
+
+    client = TmdbClient()
+
+    def progress(done: int, total: int, stats: FilmographyStats) -> None:
+        if done % 100 == 0 or done == total:
+            typer.echo(
+                f"  {done}/{total} people   films stored {stats.films_stored}   "
+                f"credits {stats.credits_stored}"
+            )
+
+    started = time.perf_counter()
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        people = people_worth_traversing(session, upload.id, min_films=min_films)
+        if limit is not None:
+            people = people[:limit]
+        typer.echo(f"{len(people)} people with {min_films}+ films in a modelled role")
+
+        genre_map = fetch_genre_map(client)
+        stats = ingest_filmographies(session, client, people, genre_map, on_progress=progress)
+    elapsed = time.perf_counter() - started
+
+    typer.echo("")
+    typer.echo(f"people fetched      {stats.fetched}/{stats.people}")
+    if stats.missing or stats.errors:
+        typer.echo(f"missing / errors    {stats.missing} / {stats.errors}")
+    typer.echo(f"new films stored    {stats.films_stored}")
+    typer.echo(f"credits stored      {stats.credits_stored}")
+    typer.echo(f"skipped, few votes  {stats.skipped_low_votes}")
+    typer.echo(f"requests            {client.request_count} ({client.retry_count} retried)")
+    typer.echo(f"elapsed             {elapsed:.1f}s")
+
+
+@app.command("recommend")
+def recommend(
+    token: str = typer.Argument(..., help="Upload token"),
+    top: int = typer.Option(20, "--top", help="How many to show"),
+) -> None:
+    """Recommend unseen films by walking the crew graph, with Level 3 metrics."""
+    from ariadne.core.catalog.roles import DIRECTOR
+    from ariadne.core.evaluation.baselines import DirectorOnly
+    from ariadne.core.recommend.adjacency import (
+        build_recommendations,
+        find_disagreements,
+        resolve_directors,
+    )
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        films = load_dataset(session, upload.id)
+        model = CrewModel()
+        model.fit(films)
+
+        report = build_recommendations(session, upload.id, model, films)
+        chosen = report.top(top)
+
+        # Candidates arrive from below-the-line filmographies, so nothing is known about who
+        # directed them. Resolving the shortlist is what makes non-obviousness measurable.
+        familiar = {p for f in films for p in f.people_in(DIRECTOR)}
+        resolved = resolve_directors(chosen, TmdbClient(), familiar)
+
+        director_model = DirectorOnly()
+        director_model.fit(films)
+        gaps = find_disagreements(films, model, director_model)[:5]
+
+        wanted = {c.reason_person for c in chosen if c.reason_person}
+        names = person_names(session, wanted)
+
+    typer.echo(f"catalog {report.catalog_films} films   already rated {report.already_rated}")
+    typer.echo(f"scoreable candidates {report.scoreable}   coverage {report.coverage * 100:.1f}%")
+
+    typer.echo("")
+    typer.echo("LEVEL 3 METRICS")
+    typer.echo(
+        f"  novelty            {report.novelty(top) * 100:.1f}th percentile of your library"
+        "   (low is the target)"
+    )
+    typer.echo(
+        "  ranked by crew contribution, not predicted rating — see Candidate.crew_adjustment"
+    )
+    obvious = report.non_obviousness(top)
+    if obvious is None:
+        typer.echo("  non-obviousness    unknown — no director resolved for any recommendation")
+    else:
+        typer.echo(
+            f"  non-obviousness    {obvious * 100:.0f}% have a director you have never rated"
+            f"   ({resolved}/{len(chosen)} directors looked up)"
+        )
+
+    typer.echo("")
+    typer.echo(f"TOP {top}")
+    for candidate in chosen:
+        who = names.get(candidate.reason_person or 0, str(candidate.reason_person))
+        flag = "  [familiar director]" if candidate.is_non_obvious is False else ""
+        typer.echo(
+            f"  {candidate.crew_adjustment:>+6.3f}  {candidate.film.title[:42]:<43}"
+            f"{str(candidate.film.year or '?'):>6}  pred {candidate.score:.2f}{flag}"
+        )
+        typer.echo(
+            f"         because of {who} ({candidate.reason_role}, {candidate.reason_effect:+.3f})"
+            f"   novelty {candidate.novelty_percentile * 100:.0f}th"
+        )
+
+    typer.echo("")
+    typer.echo("WHERE CREW AND DIRECTOR DISAGREE MOST (films you have already rated)")
+    for gap in gaps:
+        typer.echo(
+            f"  {gap.film.title[:44]:<45} you {gap.film.rating:>4.1f}   "
+            f"crew {gap.crew_score:>5.2f}   director {gap.director_score:>5.2f}"
+            f"   gap {gap.gap:+.2f}"
+        )
+
+
+@app.command("variants")
+def variants(
+    token: str = typer.Argument(..., help="Upload token"),
+    resamples: int = typer.Option(1500, "--resamples", help="Paired bootstrap resamples"),
+) -> None:
+    """Compare crew-model variants against the default, so choices are measured not argued.
+
+    Varies the expectation model, how co-credited people combine, and whether the target includes
+    a rewatch bonus. Every variant is scored on both splits and bootstrapped against the default.
+    """
+    import numpy as np
+
+    from ariadne.core.evaluation.metrics import GATE_K, GATE_THRESHOLD, compare, precision_at_k
+    from ariadne.core.evaluation.splits import random_split, temporal_split
+
+    definitions: list[tuple[str, str, str, str]] = [
+        ("default", "rich", "mean", "rating"),
+        ("simple expectation", "simple", "mean", "rating"),
+        ("combine=max", "rich", "max", "rating"),
+        ("combine=weighted", "rich", "weighted", "rating"),
+        ("target=preference", "rich", "mean", "preference"),
+        ("preference + weighted", "rich", "weighted", "preference"),
+    ]
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+    covered = sum(1 for f in films if f.in_diary)
+    typer.echo(
+        f"films {len(films)}   diary covers {covered} ({covered / len(films) * 100:.0f}%), "
+        f"so the rewatch bonus applies to those only"
+    )
+
+    for split in (temporal_split(films), random_split(films)):
+        # Scored against the raw rating throughout, even for the preference variant. A model that
+        # optimises a target of its own choosing must still be judged on the thing users care
+        # about, or the comparison is rigged.
+        actual = np.array([f.rating for f in split.test], dtype=float)
+
+        typer.echo("")
+        typer.echo(f"=== {split.name} ===   train {len(split.train)}   test {len(split.test)}")
+        typer.echo("")
+        typer.echo(f"  {'variant':<24}{'GATE':>7}{'vs default':>12}{'95% CI':>18}  verdict")
+
+        predictions: dict[str, np.ndarray] = {}
+        for label, expectation, combine, target in definitions:
+            model = CrewModel(expectation=expectation, combine=combine, target=target)
+            model.fit(split.train)
+            predictions[label] = model.predict(split.test)
+
+        for label, _, _, _ in definitions:
+            gate = precision_at_k(predictions[label], actual, GATE_K, GATE_THRESHOLD)
+            if label == "default":
+                typer.echo(f"  {label:<24}{gate:>7.3f}{'—':>12}{'—':>18}  reference")
+                continue
+            result = compare(
+                label,
+                predictions[label],
+                "default",
+                predictions["default"],
+                actual,
+                resamples=resamples,
+            )
+            verdict = "differs" if result.significant else "within noise"
+            typer.echo(
+                f"  {label:<24}{gate:>7.3f}{result.observed_diff:>+12.3f}"
+                f"{f'[{result.ci_low:+.3f}, {result.ci_high:+.3f}]':>18}  {verdict}"
+            )
+
+    typer.echo("")
+    typer.echo("All variants scored against the raw rating, including the preference one.")
+
+
+@app.command("attribution")
+def attribution(
+    token: str = typer.Argument(..., help="Upload token"),
+) -> None:
+    """Does each person's effect survive once directors compete for the same variance?
+
+    Track 1 estimates people independently and can only flag inseparability structurally. Ridge
+    fits everyone at once, so refitting with directors as features shows quantitatively whether an
+    effect was really the director's (D8, D9).
+    """
+    from ariadne.core.taste.ridge import attribute
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+        model = CrewModel()
+        model.fit(films)
+        track1 = {
+            (r, e.person_id): (e.effect, e.n_films)
+            for r in model.roles
+            for e in model.reportable_effects(r)
+        }
+        results = attribute(films, track1)
+        names = person_names(session, {a.person_id for a in results})
+
+    typer.echo(
+        f"films {len(films)}   {len(results)} people above the {MIN_FILMS_TO_REPORT}-film threshold"
+    )
+    typer.echo("")
+    typer.echo(
+        f"  {'person':<24}{'role':<18}{'n':>4}{'track1':>9}"
+        f"{'ridge':>9}{'+dir':>9}{'kept':>7}  verdict"
+    )
+    for a in results:
+        label = names.get(a.person_id, str(a.person_id))[:23]
+        kept = f"{a.retained_share:>7.2f}" if a.retained_share is not None else f"{'—':>7}"
+        typer.echo(
+            f"  {label:<24}{a.role:<18}{a.n_films:>4}{a.track1_effect:>+9.3f}"
+            f"{a.ridge_without_director:>+9.3f}{a.ridge_with_director:>+9.3f}"
+            f"{kept}  {a.verdict}"
+        )
+
+    attributable = [a for a in results if a.attributable]
+    survived = sum(1 for a in attributable if a.survives)
+    typer.echo("")
+    typer.echo(
+        f"  {survived}/{len(attributable)} attributable effects survive with directors in the model"
+    )
+    typer.echo(f"  ({len(results) - len(attributable)} too small to attribute)")
+    typer.echo("  'kept' is the ridge-with-director coefficient as a share of the Track 1 effect.")
+
+
+@app.command("gate")
+def gate(
+    token: str = typer.Argument(..., help="Upload token"),
+    resamples: int = typer.Option(2000, "--resamples", help="Paired bootstrap resamples"),
+) -> None:
+    """The go/no-go, with intervals.
+
+    Reported against both comparisons (D69): crew versus director-only is the thesis, crew versus
+    the best baseline is whether it is useful.
+    """
+    import numpy as np
+
+    from ariadne.core.evaluation.baselines import full_ladder
+    from ariadne.core.evaluation.metrics import compare
+    from ariadne.core.evaluation.splits import random_split, temporal_split
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+    for split in (temporal_split(films), random_split(films)):
+        actual = np.array([f.rating for f in split.test], dtype=float)
+        predictions: dict[str, np.ndarray] = {}
+        for predictor in full_ladder():
+            predictor.fit(split.train)
+            predictions[predictor.name] = predictor.predict(split.test)
+
+        typer.echo("")
+        typer.echo(f"=== {split.name} ===   train {len(split.train)}   test {len(split.test)}")
+        typer.echo("")
+        typer.echo(f"  {'comparison':<34}{'diff':>8}{'95% CI':>18}{'P(a>b)':>9}  verdict")
+
+        pairs = [
+            ("crew", "director_only", "THESIS: crew beats the director"),
+            ("crew", "context", "USEFULNESS: crew beats the context baseline"),
+            ("crew", "genre_only", "crew vs genre_only"),
+            ("crew_ridge", "director_only", "Track 2 vs director"),
+            ("crew", "crew_ridge", "Track 1 vs Track 2"),
+            ("genre_only", "director_only", "genre vs director"),
+        ]
+        for a, b, label in pairs:
+            if a not in predictions or b not in predictions:
+                continue
+            result = compare(a, predictions[a], b, predictions[b], actual, resamples=resamples)
+            verdict = "significant" if result.significant else "within noise"
+            typer.echo(
+                f"  {label:<34}{result.observed_diff:>+8.3f}"
+                f"{f'[{result.ci_low:+.3f}, {result.ci_high:+.3f}]':>18}"
+                f"{result.prob_a_better:>9.2f}  {verdict}"
+            )
+
+    typer.echo("")
+    typer.echo("Paired bootstrap on Precision@100 at >=4.5. Both predictors are scored on the same")
+    typer.echo("resampled test set each time, so the interval is on the difference itself.")
+
+
 @app.command("significance")
 def significance(
     token: str = typer.Argument(..., help="Upload token"),
@@ -767,8 +1093,10 @@ def controls(
         f"{result.shuffled_above_threshold:>10}"
     )
     typer.echo("")
-    typer.echo(f"  largest-effect ratio  {result.max_ratio:.3f}  (must be <= 0.5)")
-    typer.echo(f"  above-threshold ratio {result.count_ratio:.3f}  (must be <= 0.1)")
+    typer.echo(f"  above-threshold ratio {result.count_ratio:.3f}  (pass condition: <= 0.1)")
+    typer.echo(f"  largest-effect ratio  {result.max_ratio:.3f}  (informational only)")
+    typer.echo("      a null maximum rises with how many people are tested, so this ratio is")
+    typer.echo("      not comparable across role scopes. See build_null for the rigorous test.")
     verdict = "PASS — signal collapsed" if result.collapsed else "FAIL — SHRINKAGE IS BROKEN"
     typer.echo(f"  VERDICT: {verdict}")
 

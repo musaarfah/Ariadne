@@ -18,7 +18,11 @@ import numpy as np
 
 from ariadne.core.catalog.roles import DIRECTOR
 from ariadne.core.evaluation.dataset import RatedFilm
-from ariadne.core.taste.expectation import Expectation, fit_expectation
+from ariadne.core.taste.expectation import (
+    AnyExpectation,
+    fit_expectation,
+    fit_rich_expectation,
+)
 from ariadne.core.taste.shrinkage import shrink
 
 
@@ -52,10 +56,33 @@ class Popularity:
 
     name: str = "popularity"
     description: str = "TMDB vote_average, mapped to the user's scale by least squares"
-    _expectation: Expectation | None = None
+    _expectation: AnyExpectation | None = None
 
     def fit(self, train: list[RatedFilm]) -> None:
         self._expectation = fit_expectation(train)
+
+    def predict(self, films: list[RatedFilm]) -> np.ndarray:
+        if self._expectation is None:
+            raise RuntimeError("fit before predict")
+        return self._expectation.predict(films)
+
+
+@dataclass
+class Context:
+    """Rung 2b: the film's context — popularity, country, decade, genre — and nothing personal.
+
+    Added because the simple popularity model left a +0.744-star mean residual on Japanese films.
+    A crew model built on the richer expectation has to be compared against a *baseline* built on
+    the same expectation, or the apparent improvement would just be the better baseline showing
+    through.
+    """
+
+    name: str = "context"
+    description: str = "vote_average, vote_count, country, decade and genre"
+    _expectation: AnyExpectation | None = None
+
+    def fit(self, train: list[RatedFilm]) -> None:
+        self._expectation = fit_rich_expectation(train)
 
     def predict(self, films: list[RatedFilm]) -> np.ndarray:
         if self._expectation is None:
@@ -70,11 +97,12 @@ class _PersonEffects:
     a person cannot look preferred merely for working on well-regarded films (D6).
     """
 
-    def __init__(self, name: str, description: str, role: str | None):
+    def __init__(self, name: str, description: str, role: str | None, expectation: str = "rich"):
         self.name = name
         self.description = description
         self._role = role
-        self._expectation: Expectation | None = None
+        self._expectation_kind = expectation
+        self._expectation: AnyExpectation | None = None
         self._effects: dict[int, float] = {}
 
     def _keys(self, film: RatedFilm) -> tuple[int, ...]:
@@ -82,7 +110,11 @@ class _PersonEffects:
         return film.people_in(self._role)
 
     def fit(self, train: list[RatedFilm]) -> None:
-        self._expectation = fit_expectation(train)
+        self._expectation = (
+            fit_rich_expectation(train)
+            if self._expectation_kind == "rich"
+            else fit_expectation(train)
+        )
         residuals = self._expectation.residuals(train)
 
         grouped: dict[int, list[float]] = defaultdict(list)
@@ -131,5 +163,18 @@ class DirectorOnly(_PersonEffects):
 
 
 def ladder() -> list[Predictor]:
-    """The four baselines, floor first. Rung 5 is the crew model, built in 1.7."""
-    return [GlobalMean(), Popularity(), GenreOnly(), DirectorOnly()]
+    """The baselines, floor first."""
+    return [GlobalMean(), Popularity(), Context(), GenreOnly(), DirectorOnly()]
+
+
+def full_ladder() -> list[Predictor]:
+    """The baselines plus both crew tracks — the ladder the go/no-go is judged on.
+
+    `crew` is Track 1, shrunken per-person means. `crew_ridge` is Track 2, jointly fitted. Both
+    exclude directors, so the comparison against `director_only` tests the actual claim rather than
+    a model that has been handed the director for free.
+    """
+    from ariadne.core.taste.crew import CrewModel
+    from ariadne.core.taste.ridge import RidgeCrewModel
+
+    return [*ladder(), CrewModel(), RidgeCrewModel()]
