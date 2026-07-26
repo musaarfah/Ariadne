@@ -11,10 +11,19 @@ from ariadne.core.catalog.pipeline import ResolveStats, resolve_upload
 from ariadne.core.catalog.tmdb import TmdbAuthError, TmdbClient, TmdbError
 from ariadne.core.evaluation.audit import read_verdicts, sample_cases, write_review_file
 from ariadne.core.evaluation.coverage import build_coverage, pooled_regions, role_order
+from ariadne.core.evaluation.dataset import load_dataset
+from ariadne.core.evaluation.harness import MODEL_VERSION, evaluate, run_payload
 from ariadne.core.evaluation.level1 import build_report, upload_by_token
+from ariadne.core.evaluation.metrics import (
+    GATE_K,
+    GATE_THRESHOLD,
+    PRODUCT_K,
+    PRODUCT_THRESHOLD,
+    precision_grid,
+)
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
-from ariadne.db.models import Upload
+from ariadne.db.models import AnalysisRun, Upload
 from ariadne.db.session import get_engine, session_scope
 from ariadne.settings import get_settings
 
@@ -460,6 +469,109 @@ def coverage(token: str = typer.Argument(..., help="Upload token")) -> None:
         typer.echo(f"  {region:<7} {films:>5}  {cells}")
     if pooled:
         typer.echo(f"  (pooled: {pooled} films in regions with fewer than 15)")
+
+
+@app.command("evaluate")
+def evaluate_command(
+    token: str = typer.Argument(..., help="Upload token"),
+    k: int = typer.Option(20, "--k", help="k for Precision@k"),
+    save: bool = typer.Option(True, "--save/--no-save", help="Persist the run to analysis_runs"),
+    grid: bool = typer.Option(False, "--grid", help="Print the full P@k grid for each predictor"),
+) -> None:
+    """Score the baseline ladder on both splits."""
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        films = load_dataset(session, upload.id)
+        if not films:
+            typer.echo("no resolved rated films; run `ariadne resolve` first")
+            raise typer.Exit(code=1)
+
+        results = evaluate(films, k=k)
+        payload = run_payload(results, films=len(films))
+
+        if save:
+            session.add(
+                AnalysisRun(
+                    upload_id=upload.id,
+                    model_version=MODEL_VERSION,
+                    config={"k": k},
+                    metrics=payload,
+                )
+            )
+
+    typer.echo(f"films  {len(films)}   model  {MODEL_VERSION}")
+
+    for split in results:
+        typer.echo("")
+        typer.echo(f"=== {split.split} ===")
+        typer.echo(f"  {split.note}")
+        typer.echo(f"  train {split.train_n}   test {split.test_n}", nl=False)
+        typer.echo(f"   dropped (no log date) {split.dropped}" if split.dropped else "")
+
+        drift = split.drift
+        typer.echo(
+            f"  drift: train mean {drift.train.mean:.3f} sd {drift.train.sd:.3f} "
+            f"5.0s {drift.train.top_rating_share * 100:.1f}%"
+        )
+        typer.echo(
+            f"         test  mean {drift.test.mean:.3f} sd {drift.test.sd:.3f} "
+            f"5.0s {drift.test.top_rating_share * 100:.1f}%"
+        )
+        typer.echo(
+            f"         shift {drift.mean_shift:+.3f} mean, "
+            f"{drift.top_rating_share_shift * 100:+.1f}pp at 5.0"
+        )
+
+        typer.echo("")
+        typer.echo(
+            f"  {'predictor':<16}{'GATE':>7}{'base':>7}{'lift':>8}"
+            f"{'P@' + str(k):>7}{'rho':>8}{'MAE':>7}{'MAEc':>7}"
+        )
+        for result in split.results:
+            m = result.metrics
+            typer.echo(
+                f"  {result.name:<16}{m.gate_precision:>7.3f}{m.gate_base_rate:>7.3f}"
+                f"{m.gate_lift:>+8.3f}{m.precision_at_k:>7.3f}{m.spearman:>8.3f}"
+                f"{m.mae:>7.3f}{m.mae_centred:>7.3f}"
+            )
+
+    if grid:
+        import numpy as np
+
+        from ariadne.core.evaluation.baselines import ladder
+        from ariadne.core.evaluation.splits import temporal_split
+
+        grid_split = temporal_split(films)
+        actual = np.array([f.rating for f in grid_split.test], dtype=float)
+        typer.echo("")
+        typer.echo("=== P@k grid, temporal split ===")
+        for predictor in ladder():
+            predictor.fit(grid_split.train)
+            table = precision_grid(predictor.predict(grid_split.test), actual)
+            typer.echo(f"  {predictor.name}")
+            for threshold, row in table.items():
+                cells = "  ".join(f"k={k}:{v:.3f}" for k, v in row.items())
+                typer.echo(f"    >={threshold}  {cells}")
+
+    typer.echo("")
+    typer.echo(
+        f"GATE = Precision@{GATE_K} at rating >= {GATE_THRESHOLD}. The go/no-go metric, chosen from"
+    )
+    typer.echo(
+        f"the measured grid before the crew model existed. P@{PRODUCT_K} at >= {PRODUCT_THRESHOLD}"
+        " is what a user experiences,"
+    )
+    typer.echo(
+        "but it saturates: director_only already reaches 0.950 there, one film from the ceiling."
+    )
+    typer.echo("MAE stays secondary — 71.9% of ratings are whole stars, 222 films tie at 5.0.")
+    if save:
+        typer.echo("")
+        typer.echo("run saved to analysis_runs")
 
 
 if __name__ == "__main__":

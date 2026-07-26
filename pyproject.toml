@@ -11,11 +11,12 @@ dependencies = [
     "typer>=0.12",
     "redis>=5.0",
     "requests>=2.32",
+    "numpy>=2.0",
+    "scipy>=1.14",
+    "scikit-learn>=1.5",
 ]
 
-# Numerical stack arrives in Phase 1 (see docs/PHASES.md 1.6-1.8), API stack in Phase 2.
-# Keeping them out until they are used keeps the environment installable and honest
-# about what the project currently does.
+# API and frontend dependencies arrive in Phase 2 (see docs/PHASES.md).
 
 [project.optional-dependencies]
 dev = [
@@ -66,3 +67,8 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+# scipy and sklearn ship no type information for the parts we use.
+[[tool.mypy.overrides]]
+module = ["scipy.*", "sklearn.*"]
+ignore_missing_imports = true
