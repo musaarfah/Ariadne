@@ -1020,3 +1020,59 @@ an artefact of missing data rather than a bold opinion.
 unknown-as-unfamiliar): a derived quantity computed in a regime the code never excluded. Left unfixed it
 would confidently show users nonsense, in public.
 **Status.** Active.
+
+### D102 — Cast is kept for content, not for accuracy; my stated reason was wrong
+**Context.** D98 justified adding cast on the grounds that actor effects would be substantially larger
+than crew effects and would "make the recommender move." `PHASES.md` 1.10a said the same.
+**Measured.** Actor effects are the **same size** as crew effects (max 0.402 against 0.463, mean 0.102
+against 0.108), and adding them to the model *lowers* the gate from 0.710 to 0.680.
+**Decision.** Keep cast. Do not use it to improve the crew predictor.
+**The real justification.** 59 actors clear 12 films against 3 editors, and they are people the user can
+name — Irrfan Khan +0.402, Dwayne Johnson −0.296. Every crew member who clears the threshold is a
+stranger. Cast is what makes tier-2 statements *legible*, and what gives the decomposition an anchor:
+"crew matters less to you than cast" cannot be said while cast is absent.
+**Status.** Active. D98's conclusion stands on different reasoning; its stated reason is retracted here.
+
+### D103 — Mean-combination caps how much any new role can help
+**Context.** F70 — adding a sixth to twelfth role made prediction slightly worse, not better.
+**Mechanism.** `CrewModel.predict` averages the adjustment across roles present on a film, so each added
+role pulls every adjustment toward zero. This is arithmetic, not a fact about actors.
+**Consequence.** D89 tested `max` and `weighted` against five roles and found no difference. That result
+does not transfer to twelve roles, and the test must be repeated before the decomposition or the
+full-feature recommender is built.
+**Status.** Open, and now blocking 1.10c/1.10d rather than merely tidy.
+
+### D104 — D103 resolved: no combination strategy helps, and the constraint is effect size
+**Tested.** The across-role step was parameterised and all four strategies run against three role scopes
+on both splits — twelve configurations.
+**Result.** The best temporal configuration is the existing default. The best random one gains +0.020 with
+a 95% interval of [−0.050, +0.080], and the splits disagree about which strategy wins. Twelve
+configurations span 0.660–0.710.
+**Decision.** Keep `mean` for both within-role and across-role. All four strategies stay implemented and
+tested, so the claim is "measured, no difference" rather than "assumed fine".
+**What it establishes.** Three explanations for the model's modest predictive power have now been tested
+and rejected: too few roles (F70), missing cast (F70), and combination arithmetic (F72). What remains is
+that **the effects are small** — ±0.3 stars against an expectation spanning one to five. No combination of
+small numbers becomes a large one.
+**Consequence.** 1.10d should be gated on a single test rather than built out. After three rejected
+hypotheses, the prior that a different model class rescues this is low.
+**Status.** D103 closed. This is the third hypothesis of mine falsified today, which is worth noting as a
+pattern: every time I have predicted a mechanism for the weak prediction, measuring it has said no.
+
+### D105 — Gradient boosting is tested and not adopted
+**Context.** Three rejected hypotheses left one: that a linear model cannot express the pattern and a
+model capturing interactions would find what ridge and shrunken means cannot. The user was right to want
+this tested rather than assumed.
+**Tested.** `HistGradientBoostingRegressor` on 54 context features and 71 with crew effects added. Crew
+effects fitted on the training block only and applied to both, since fitting on all films and splitting
+afterwards would let each test film's effect come from its own rating.
+**Result.** Every gate comparison within noise. GBM is a slightly better *regressor* — MAE 0.765 → 0.751
+and 0.626 → 0.604 — and a slightly worse *ranker* on the temporal split, Spearman 0.651 → 0.628. The gate
+is a ranking metric and recommendations are a ranking problem, so the MAE gain does not translate.
+**Decision.** Do not adopt. Keep the linear model, which is interpretable and produces the coefficients
+the product shows.
+**The finding inside the null.** GBM with **zero crew or cast features** scores 0.720 against the crew
+model's 0.710, and *adding* crew features drops it to 0.650. A model that knows nothing about who made the
+film predicts as well as one that does, and a flexible model handed crew columns declines to use them.
+That is a stronger statement than "the effects are small".
+**Status.** Active. Fourth hypothesis tested and rejected; 1.10d as originally scoped is cancelled.
