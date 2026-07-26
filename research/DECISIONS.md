@@ -1076,3 +1076,29 @@ model's 0.710, and *adding* crew features drops it to 0.650. A model that knows 
 film predicts as well as one that does, and a flexible model handed crew columns declines to use them.
 That is a stronger statement than "the effects are small".
 **Status.** Active. Fourth hypothesis tested and rejected; 1.10d as originally scoped is cancelled.
+
+### D106 — "The films that define your taste" is removed rather than repaired
+**Context.** The last section of the tier-1 portrait was to rank films by distance from expectation, on the
+premise that a user's departures from consensus are where their taste is legible.
+**What happened.** Ranked by absolute residual, it reprinted the negative tail the previous section had
+just shown: the library mean of 3.43 leaves 2.93 stars of room below a typical prediction and 1.57 above,
+so on a bounded scale the largest deviations are structurally the harsh ratings, not the revealing ones.
+Normalising by that headroom removes the asymmetry and ties every 5.0 rating at 100% of its headroom,
+ordering nothing.
+**Decision.** Delete the section. `disagreements` already reports both tails, labelled by direction, with a
+vote floor, and comparable to each other. A third ranking over the same statistic under a more impressive
+name adds no information and overstates what it measures.
+**Why this is recorded rather than quietly dropped.** The failure is a specific and reusable one: a
+statistic was chosen for what it sounded like it measured, and the label survived two attempts at making
+the number match it. The removal is noted in a comment at the site so it does not get reinvented.
+**Status.** Active. F74.
+
+### D107 — Blind-spot labels carry their slice type
+**Context.** Decades, countries and genres compete in one ranked list of thinly-watched slices the user
+rates well.
+**Problem.** Rows read `DE`, `JP`, `1950s`, `Western` — the reader had to infer what kind of thing each row
+was, and a two-letter country code next to a decade invites misreading one as the other.
+**Decision.** Prefix each label with its slice type: `country DE`, `decade 1950s`, `genre Western`. Cheap,
+and it keeps the single ranked list rather than splitting into three shorter ones that would hide the fact
+that country dominates the top of this user's list.
+**Status.** Active.

@@ -743,6 +743,96 @@ def filmographies(
     typer.echo(f"elapsed             {elapsed:.1f}s")
 
 
+@app.command("portrait")
+def portrait(
+    token: str = typer.Argument(..., help="Upload token"),
+) -> None:
+    """What your library knows about you. Tier 1 only — facts, no estimates.
+
+    Nothing here is a prediction. Four hypotheses about the predictive value of who-made-what were
+    tested and rejected (F70, F72, F73), so this section deliberately contains no modelled claim.
+    """
+    from ariadne.core.catalog.roles import PRODUCT_ROLES
+    from ariadne.core.recommend.portrait import MIN_VOTES_FOR_RESIDUAL, build_portrait
+    from ariadne.core.taste.expectation import fit_rich_expectation
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        films = load_dataset(session, upload.id)
+        expectation = fit_rich_expectation(films)
+        report = build_portrait(films, expectation, PRODUCT_ROLES)
+        names = person_names(session, {loyalty.person_id for loyalty in report.loyalties})
+
+    typer.echo(f"{report.films} rated films.  Everything below is a count or a direct observation:")
+    typer.echo("no estimate, no interval, nothing that could turn out to be a different number.")
+
+    revealed = report.revealed
+    if revealed is not None:
+        typer.echo("")
+        typer.echo("WHAT YOU SAY vs WHAT YOU DO")
+        typer.echo(
+            f"  You rated {revealed.top_rated_total} films {5.0:g}. Of the "
+            f"{revealed.top_rated_in_diary} your diary covers, "
+            f"**{revealed.top_rated_never_revisited} you never went back to.**"
+        )
+        typer.echo("  Films you actually returned to:")
+        for film in revealed.rewatched[:6]:
+            typer.echo(f"    {film.rewatches}x  {film.title[:44]:<46} rated {film.rating}")
+
+    typer.echo("")
+    typer.echo("PEOPLE YOU HAVE BEEN FOLLOWING")
+    for loyalty in report.loyalties:
+        typer.echo(
+            f"  {loyalty.films:>3} films   {names.get(loyalty.person_id, loyalty.person_id):<26}"
+            f"{loyalty.role}"
+        )
+
+    typer.echo("")
+    typer.echo("WHERE YOU DISAGREE WITH THE WORLD")
+    typer.echo(
+        f"  (films with at least {MIN_VOTES_FOR_RESIDUAL} votes; "
+        f"{report.excluded_low_votes} excluded for having too few)"
+    )
+    typer.echo("  you rate far ABOVE what this kind of film usually gets from you:")
+    for item in report.above[:5]:
+        typer.echo(
+            f"    {item.residual:>+5.2f}  {item.film.title[:40]:<42} "
+            f"you {item.film.rating:<4} world {item.film.vote_average:.1f}/10"
+        )
+    typer.echo("  and far BELOW:")
+    for item in report.below[:5]:
+        typer.echo(
+            f"    {item.residual:>+5.2f}  {item.film.title[:40]:<42} "
+            f"you {item.film.rating:<4} world {item.film.vote_average:.1f}/10"
+        )
+
+    typer.echo("")
+    typer.echo("YOUR BLIND SPOTS — rated above your average, barely watched")
+    for spot in report.blind_spots[:6]:
+        typer.echo(
+            f"  {spot.label:<18} {spot.films:>3} films   avg {spot.mean_rating:.2f}"
+            f"   {spot.lift:+.2f} vs your library average of {spot.library_mean:.2f}"
+        )
+
+    style = report.style
+    if style is not None:
+        typer.echo("")
+        typer.echo("HOW YOU RATE")
+        typer.echo(
+            f"  {style.whole_star_share * 100:.0f}% whole stars, "
+            f"{style.levels_used} of {style.levels_available} levels used  —  "
+            + ("decisive rather than calibrating" if style.is_decisive else "you use the scale")
+        )
+        typer.echo(
+            f"  mean {style.mean:.2f}, spread {style.sd:.2f}, "
+            f"{style.top_rating_share * 100:.0f}% of everything you rate is a {5.0:g}"
+        )
+
+
 @app.command("recommend")
 def recommend(
     token: str = typer.Argument(..., help="Upload token"),
