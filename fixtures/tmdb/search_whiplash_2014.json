@@ -1,0 +1,28 @@
+{
+  "query": "Whiplash",
+  "year": 2014,
+  "note": "feature",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/wbQa0EnWUyRzQ5d1pHLNRlmsCUP.jpg",
+      "genre_ids": [
+        18,
+        10402,
+        53
+      ],
+      "id": 244786,
+      "title": "Whiplash",
+      "original_language": "en",
+      "original_title": "Whiplash",
+      "overview": "Under the direction of a ruthless instructor, a talented young drummer begins to pursue perfection at any cost, even his humanity.",
+      "popularity": 29.5588,
+      "poster_path": "/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
+      "release_date": "2014-10-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.375,
+      "vote_count": 16828
+    }
+  ]
+}

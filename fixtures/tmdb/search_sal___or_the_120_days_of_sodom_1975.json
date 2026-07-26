@@ -1,0 +1,46 @@
+{
+  "query": "Salò, or the 120 Days of Sodom",
+  "year": 1975,
+  "note": "grave accent, comma",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/wP1wgntZ6VIja8hprxV6UKdQugk.jpg",
+      "genre_ids": [
+        27,
+        18
+      ],
+      "id": 5336,
+      "title": "Salò, or the 120 Days of Sodom",
+      "original_language": "it",
+      "original_title": "Salò o le 120 giornate di Sodoma",
+      "overview": "Four corrupted fascist libertines round up 9 teenage boys and girls and subject them to 120 days of sadistic physical, mental and sexual torture.",
+      "popularity": 5.1627,
+      "poster_path": "/xnaDdiRfZlJaTf6JRc4in40eaeI.jpg",
+      "release_date": "1976-01-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.3,
+      "vote_count": 2323
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99
+      ],
+      "id": 1523709,
+      "title": "Backstage on the Set of Salò, or the 120 Days of Sodom",
+      "original_language": "it",
+      "original_title": "Backstage sul set di Salò",
+      "overview": "A journey behind the shooting on the set of Salò, a backstage by Gideon Bachman, recorded during the realization of the torture scenes, enriched by long interviews with actors.",
+      "popularity": 0.2632,
+      "poster_path": "/zMK247upVAb1DJ2azOc93s548aA.jpg",
+      "release_date": "1975-12-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    }
+  ]
+}

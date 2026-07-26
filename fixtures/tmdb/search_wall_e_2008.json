@@ -1,0 +1,89 @@
+{
+  "query": "WALL·E",
+  "year": 2008,
+  "note": "interpunct",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/nYs4ZwnJBK4AgljhvzwNz7fpr3E.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        878
+      ],
+      "id": 10681,
+      "title": "WALL·E",
+      "original_language": "en",
+      "original_title": "WALL·E",
+      "overview": "After hundreds of years doing what he was built for, WALL•E— a robot designed to clean up the earth—discovers a new purpose in life when he meets a sleek search robot named EVE. EVE comes to realize that WALL•E has inadvertently stumbled upon the key to the planet's future, and races back to space to report to the humans. Meanwhile, WALL•E chases EVE across the galaxy and sets into motion one of the most imaginative adventures ever brought to the big screen.",
+      "popularity": 33.5808,
+      "poster_path": "/hbhFnRzzg6ZDmm8YAmxBnQpQIPh.jpg",
+      "release_date": "2008-06-26",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.117,
+      "vote_count": 20520
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/dkQL7x7rCSVhEovq5zxq8WWC8T3.jpg",
+      "genre_ids": [
+        16
+      ],
+      "id": 877268,
+      "title": "WALL·E's Treasures & Trinkets",
+      "original_language": "en",
+      "original_title": "WALL·E's Treasures & Trinkets",
+      "overview": "Short vignettes featured as a DVD Extra Short.",
+      "popularity": 1.2639,
+      "poster_path": "/pJfm3EggGLZToce08Obf7HQHXrP.jpg",
+      "release_date": "2008-11-18",
+      "softcore": false,
+      "video": true,
+      "vote_average": 6.4,
+      "vote_count": 5
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/gaLg3gpoJScDNfkDw4itX79Gi8x.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        35,
+        878
+      ],
+      "id": 13413,
+      "title": "BURN·E",
+      "original_language": "en",
+      "original_title": "BURN·E",
+      "overview": "What lengths will a robot undergo to do his job? BURN·E is a dedicated hard working robot who finds himself locked out of his ship. BURN·E quickly learns that completing a simple task can often be a very difficult endeavor.",
+      "popularity": 2.7435,
+      "poster_path": "/1wOReJq1vArLBSejND2Jbw0KeKh.jpg",
+      "release_date": "2008-11-17",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.501,
+      "vote_count": 813
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/v46Uq29FXcl4huvu1Nh7tJ5qAjZ.jpg",
+      "genre_ids": [
+        80,
+        18
+      ],
+      "id": 10673,
+      "title": "Wall Street",
+      "original_language": "en",
+      "original_title": "Wall Street",
+      "overview": "A young and impatient stockbroker is willing to do anything to get to the top, including trading on illegal inside information taken through a ruthless and greedy corporate raider, whom takes the youth under his wing.",
+      "popularity": 5.4417,
+      "poster_path": "/2tQYq9ntzn2dEwDIGLBSipYPenv.jpg",
+      "release_date": "1987-12-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.164,
+      "vote_count": 2278
+    }
+  ]
+}

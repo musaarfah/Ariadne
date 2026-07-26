@@ -1,0 +1,26 @@
+{
+  "query": "Obi-Wan Kenobi",
+  "year": 2022,
+  "note": "television, should not match a movie",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/c8jqJ502BzvkCXy2enrao1PuQEE.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 1015606,
+      "title": "Obi-Wan Kenobi: A Jedi's Return",
+      "original_language": "en",
+      "original_title": "Obi-Wan Kenobi: A Jedi's Return",
+      "overview": "This special explores the return of Obi-Wan Kenobi and Anakin Skywalker to the screen, as well as Ewan McGregor and Hayden Christensen to their classic roles. Director Deborah Chow leads the cast and crew as they create new heroes and villains that live alongside new incarnations of beloved Star Wars characters, and an epic story that dramatically bridges the saga films.",
+      "popularity": 5.5877,
+      "poster_path": "/vQGgvXjoMZf8x1m3BHsMxVXPyck.jpg",
+      "release_date": "2022-09-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.795,
+      "vote_count": 1019
+    }
+  ]
+}

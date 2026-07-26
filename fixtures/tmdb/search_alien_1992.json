@@ -1,0 +1,246 @@
+{
+  "query": "Alien³",
+  "year": 1992,
+  "note": "superscript digit",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/lU0zVj8KcQVkPczdGGraYGiRC72.jpg",
+      "genre_ids": [
+        878,
+        28,
+        27
+      ],
+      "id": 8077,
+      "title": "Alien³",
+      "original_language": "en",
+      "original_title": "Alien³",
+      "overview": "After escaping with Newt and Hicks from the alien planet, Ripley crash lands on Fiorina 161, a prison planet and host to a correctional facility. Unfortunately, although Newt and Hicks do not survive the crash, a more unwelcome visitor does. The prison does not allow weapons of any kind, and with aid being a long time away, the prisoners must simply survive in any way they can.",
+      "popularity": 12.4019,
+      "poster_path": "/xh5wI0UoW7DfS1IyLy3d2CgrCEP.jpg",
+      "release_date": "1992-05-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.389,
+      "vote_count": 6450
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        28,
+        27
+      ],
+      "id": 367099,
+      "title": "Alien Platoon",
+      "original_language": "fr",
+      "original_title": "Alien Platoon",
+      "overview": "Major Taylor creates a super-soldier who goes rogue due to his insatiable lust for 'girls' and runs amok in the French countryside.",
+      "popularity": 0.9784,
+      "poster_path": "/83iq7QORVNUmmcNmuS4qrDDS5fs.jpg",
+      "release_date": "1992-11-26",
+      "softcore": false,
+      "video": false,
+      "vote_average": 2.7,
+      "vote_count": 3
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99
+      ],
+      "id": 667962,
+      "title": "The Making of 'Alien³'",
+      "original_language": "en",
+      "original_title": "The Making of 'Alien³'",
+      "overview": "A short promotional documentary detailing production of the 1992 film Alien³, containing interviews with cast and crew, as well as behind the scenes clips.",
+      "popularity": 0.2864,
+      "poster_path": "/Aks32Pl7x9MSfaVxURGwtySl8Bu.jpg",
+      "release_date": "1992-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.5,
+      "vote_count": 5
+    },
+    {
+      "adult": true,
+      "backdrop_path": null,
+      "genre_ids": [],
+      "id": 759215,
+      "title": "I Fucked an Alien",
+      "original_language": "it",
+      "original_title": "Ho scopato un'aliena",
+      "overview": "Cicciolina plays the Queen of a planet where the male population does not have penises. An earthly porn magazine is brought to her, she notices the \"difference\", and decides to check things here.",
+      "popularity": 0.0,
+      "poster_path": "/2fat3Mf0rGxPgwtll9F4Uiy5BNv.jpg",
+      "release_date": "1992-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.5,
+      "vote_count": 4
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99,
+        878
+      ],
+      "id": 1166358,
+      "title": "UFOs And The Alien Presence",
+      "original_language": "en",
+      "original_title": "UFOs And The Alien Presence",
+      "overview": "World renowned UFO author and researcher Michael Lindemann presents the facts on how the government has worked to shape the public view about UFOs and extraterrestrial life. Now referred to as the \"spin factor,\" we find that our current views are based on sensationalistic Hollywood propaganda. Government deception, secret underground bases, unexplained cattle mutilations, secret advanced technology and alien abductions are just a few of the many topics covered in this intelligently researched program exposing the misinformation and the facts behind the truth. The presentation is not slanted in any direction, and the director (Marty Thomas) framed the documentary with a unique, fast paced style. The real photos and film clips (over 500) are strange and fascinating.",
+      "popularity": 0.1679,
+      "poster_path": "/69CpNJ2pDJhZkvrEQLYtWmTQGbu.jpg",
+      "release_date": "1992-04-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 9.0,
+      "vote_count": 1
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/e7XOjSdHJuuG2CxffmrgnrWxaCE.jpg",
+      "genre_ids": [
+        35,
+        99,
+        878
+      ],
+      "id": 19459,
+      "title": "Tribulation 99: Alien Anomalies Under America",
+      "original_language": "en",
+      "original_title": "Tribulation 99: Alien Anomalies Under America",
+      "overview": "Baldwin’s “pseudo-pseudo-documentary” presents a factual chronicle of US intervention in Latin America in the form of the ultimate conspiracy theory, combining covert action, environmental catastrophe, space aliens, cattle mutilations, killer bees, religious prophecy, doomsday diatribes, and just about every other crackpot theory broadcast through the dentures of the modern paranoiac.",
+      "popularity": 0.7411,
+      "poster_path": "/7aP35sdBMPDxPk2BqgNHKacG429.jpg",
+      "release_date": "1991-12-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.214,
+      "vote_count": 14
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99,
+        36
+      ],
+      "id": 1055377,
+      "title": "Writ‌ing On The Line - Alien Face In The Mirror",
+      "original_language": "en",
+      "original_title": "Writ‌ing On The Line - Alien Face In The Mirror",
+      "overview": "A documentary on the life and writings of Saunders Lewis.",
+      "popularity": 0.1728,
+      "poster_path": null,
+      "release_date": "1992-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        99
+      ],
+      "id": 1574864,
+      "title": "Queer Alien invades Earth: A Portrait of Legendary Madame Simone",
+      "original_language": "fr",
+      "original_title": "Queer Alien invades Earth: A Portrait of Legendary Madame Simone",
+      "overview": "A portrait of the legendary Madame Simone, shot in the early nineties by an undergraduate student.",
+      "popularity": 0.1802,
+      "poster_path": null,
+      "release_date": "1992-06-06",
+      "softcore": false,
+      "video": false,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        35,
+        878
+      ],
+      "id": 446184,
+      "title": "Space Case",
+      "original_language": "en",
+      "original_title": "Space Case",
+      "overview": "In the future, mental institutions are located on far-away planets. One such planet is the apex for an invasion of Earth by rodent-like aliens. It is up to a band of intrepid mental patients to thwart their evil schemes.",
+      "popularity": 0.3078,
+      "poster_path": "/tFHzZZT56CQDzQO3pAhe4wdVVVE.jpg",
+      "release_date": "1992-01-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 10.0,
+      "vote_count": 1
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        878,
+        35
+      ],
+      "id": 280495,
+      "title": "Deceit",
+      "original_language": "en",
+      "original_title": "Deceit",
+      "overview": "Two outer-space aliens visit Earth with the intention of blowing it up, but they meet a hot blonde and decide to postpone the planet's destruction in order to try to score with her.",
+      "popularity": 0.7007,
+      "poster_path": "/tegEsG903PYSrGFgPl8BlEV8cW2.jpg",
+      "release_date": "1992-08-21",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.857,
+      "vote_count": 7
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/cyrZlpokGbRD22kByZYccp3amtq.jpg",
+      "genre_ids": [
+        878,
+        35,
+        27
+      ],
+      "id": 48302,
+      "title": "Bad Channels",
+      "original_language": "en",
+      "original_title": "Bad Channels",
+      "overview": "An alien determined to capture human females takes over a radio station to do it.",
+      "popularity": 0.9704,
+      "poster_path": "/bhjBYcGqWAIXDnJpUYIu3y6SLx8.jpg",
+      "release_date": "1992-06-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.0,
+      "vote_count": 64
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/4kix6fAblJIH6eMs0Ku2loyZJXK.jpg",
+      "genre_ids": [
+        28,
+        53,
+        878
+      ],
+      "id": 679,
+      "title": "Aliens",
+      "original_language": "en",
+      "original_title": "Aliens",
+      "overview": "Ripley, the sole survivor of the Nostromo's deadly encounter with the monstrous Alien, returns to Earth after drifting through space in hypersleep for 57 years. Although her story is initially met with skepticism, she agrees to accompany a team of Colonial Marines back to LV-426.",
+      "popularity": 19.7032,
+      "poster_path": "/r1x5JGpyqZU8PYhbs4UcrO1Xb6x.jpg",
+      "release_date": "1986-07-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.966,
+      "vote_count": 10977
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import typer
 from redis import Redis
 from sqlalchemy import inspect, text
 
+from ariadne.core.catalog.fixtures import FIXTURE_DIR, capture_all
+from ariadne.core.catalog.tmdb import TmdbAuthError, TmdbClient, TmdbError
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
 from ariadne.db.session import get_engine, session_scope
@@ -100,6 +102,45 @@ def ingest(
         token = upload.token
 
     typer.echo(f"\nupload token       {token}")
+
+
+@app.command("tmdb-check")
+def tmdb_check() -> None:
+    """Verify the TMDB key works and report what a known film looks like."""
+    try:
+        client = TmdbClient()
+    except TmdbAuthError as exc:
+        typer.echo(f"tmdb        FAIL {exc}")
+        raise typer.Exit(code=1) from exc
+
+    try:
+        movie = client.get_movie(238)  # The Godfather
+        credits = client.get_credits(238)
+    except TmdbError as exc:
+        typer.echo(f"tmdb        FAIL {exc}")
+        raise typer.Exit(code=1) from exc
+
+    crew = credits.get("crew", [])
+    departments = sorted({member.get("department", "?") for member in crew})
+
+    typer.echo(f"tmdb        ok   rate limit {get_settings().tmdb_rate_limit:g} req/s")
+    typer.echo(f"film        {movie.get('title')} ({(movie.get('release_date') or '?')[:4]})")
+    typer.echo(f"votes       {movie.get('vote_average')} from {movie.get('vote_count')}")
+    typer.echo(f"crew        {len(crew)} credits across {len(departments)} departments")
+    typer.echo(f"departments {', '.join(departments)}")
+    typer.echo(f"requests    {client.request_count} ({client.retry_count} retried)")
+
+
+@app.command("tmdb-capture")
+def tmdb_capture() -> None:
+    """Record the seed TMDB responses into fixtures/ so tests can run offline."""
+    client = TmdbClient()
+    written = capture_all(client)
+
+    for name in written:
+        typer.echo(f"  {name}")
+    typer.echo(f"\n{len(written)} fixtures written to {FIXTURE_DIR}")
+    typer.echo(f"requests    {client.request_count} ({client.retry_count} retried)")
 
 
 if __name__ == "__main__":

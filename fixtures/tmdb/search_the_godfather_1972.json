@@ -1,0 +1,69 @@
+{
+  "query": "The Godfather",
+  "year": 1972,
+  "note": "control case",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/tSPT36ZKlP2WVHJLM4cQPLSzv3b.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 238,
+      "title": "The Godfather",
+      "original_language": "en",
+      "original_title": "The Godfather",
+      "overview": "Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son, Michael steps in to take care of the would-be killers, launching a campaign of bloody revenge.",
+      "popularity": 43.2803,
+      "poster_path": "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+      "release_date": "1972-03-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.687,
+      "vote_count": 23211
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        80,
+        28
+      ],
+      "id": 90020,
+      "title": "The Long Arm of the Godfather",
+      "original_language": "it",
+      "original_title": "La mano lunga del padrino",
+      "overview": "A  treacherous low-level mafioso greedily rips off a shipment of arms from his powerful godfather and tries to sell them to an especially dubious group of Arabs",
+      "popularity": 0.6411,
+      "poster_path": "/eRwiJc2cFguRcx3sxNOIh63gCfJ.jpg",
+      "release_date": "1972-08-11",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.0,
+      "vote_count": 1
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "genre_ids": [
+        53,
+        28,
+        80,
+        18
+      ],
+      "id": 260892,
+      "title": "The Godfather's Friend",
+      "original_language": "it",
+      "original_title": "L'amico del padrino",
+      "overview": "Richard Harrison is the Mob hit man who finds friendships can get you into trouble when he meets an old buddy who turns out to be part of an opposing family!",
+      "popularity": 0.3533,
+      "poster_path": "/cPii9mxWJpcvwN72TlNLEGIFWVo.jpg",
+      "release_date": "1972-12-24",
+      "softcore": false,
+      "video": false,
+      "vote_average": 3.0,
+      "vote_count": 3
+    }
+  ]
+}

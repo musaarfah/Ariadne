@@ -1,0 +1,124 @@
+{
+  "query": "Nosferatu",
+  "year": 2024,
+  "note": "same title, different era",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/2gAStVyyv9C3BSEKhP0a1aM3Qy9.jpg",
+      "genre_ids": [
+        27,
+        14
+      ],
+      "id": 426063,
+      "title": "Nosferatu",
+      "original_language": "en",
+      "original_title": "Nosferatu",
+      "overview": "A gothic tale of obsession between a haunted young woman and the terrifying vampire infatuated with her, causing untold horror in its wake.",
+      "popularity": 18.2868,
+      "poster_path": "/5qGIxdEO841C0tdY8vOdLoRVrr0.jpg",
+      "release_date": "2024-12-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.711,
+      "vote_count": 3794
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/w5X0TIHd0Odwq5CE9RAU2Um9W0w.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 1409675,
+      "title": "Nosferatu: An Inside Look",
+      "original_language": "en",
+      "original_title": "Nosferatu: An Inside Look",
+      "overview": "An exclusive behind-the-scenes look “Nosferatu,” Robert Eggers’ gothic tale of obsession. Now playing exclusively in theaters.",
+      "popularity": 1.472,
+      "poster_path": "/ryci6bECkKeSMpcp073hIPEo75a.jpg",
+      "release_date": "2024-12-30",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.5,
+      "vote_count": 2
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/tAxCmawvAn4P7IPPFi8geGtfPj1.jpg",
+      "genre_ids": [
+        27
+      ],
+      "id": 394151,
+      "title": "Nosferatu: A Symphony of Horror",
+      "original_language": "en",
+      "original_title": "Nosferatu: A Symphony of Horror",
+      "overview": "The original 1922 \"Nosferatu\" is regarded as one of the most important films ever made, and a cornerstone of the vampire genre. Now, over one hundred years later, the bloodthirsty Count Orlok rises once again to cast an unearthly shadow in a feature-length retelling of the classic horror masterpiece. Faithfully presented in the style of golden-age horror, and combining scenic elements from the original film with new sound and music, this all new \"Nosferatu\" is a never-before-seen 'cinematic remix' of the timeless vampire tale, and an otherworldly revisit to the land of ghosts and phantoms where blood is life!",
+      "popularity": 0.8737,
+      "poster_path": "/dD9B9Z9YoW1mrtmHPQ26LlhApka.jpg",
+      "release_date": "2023-11-17",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.357,
+      "vote_count": 15
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/8iG7yCSgBy9OFLbNLyM34jTxDEz.jpg",
+      "genre_ids": [
+        99
+      ],
+      "id": 1384566,
+      "title": "Nosferatu: The Real Story",
+      "original_language": "en",
+      "original_title": "Nosferatu: The Real Story",
+      "overview": "Nosferatu was a silent horror film, an unauthorised Dracula adaptation. Despite a court order to destroy it, surviving copies became highly influential in cinema. This documentary traces its origins, impact, and legacy, leading to the 2024 remake.",
+      "popularity": 0.5067,
+      "poster_path": "/l8kktyZbgvKFFG1DlKZsSDhuYIq.jpg",
+      "release_date": "2024-12-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.7,
+      "vote_count": 3
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/vIAWuR5AFEtFUJTgsaWBKVctaiS.jpg",
+      "genre_ids": [
+        10402
+      ],
+      "id": 1388357,
+      "title": "Bloodbound: The Tales of Nosferatu",
+      "original_language": "en",
+      "original_title": "Bloodbound: The Tales of Nosferatu",
+      "overview": "",
+      "popularity": 0.0968,
+      "poster_path": "/cJwNW5BAUAB9yg7JPHF1v7otHAD.jpg",
+      "release_date": "2024-04-19",
+      "softcore": false,
+      "video": true,
+      "vote_average": 0.0,
+      "vote_count": 0
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/4DZ9rYfdLvoehzGZ7wSjMfp3Uy2.jpg",
+      "genre_ids": [
+        14,
+        27,
+        18
+      ],
+      "id": 1047223,
+      "title": "The Vourdalak",
+      "original_language": "fr",
+      "original_title": "Le Vourdalak",
+      "overview": "The Marquis d’Urfé finds refuge in the home of a strange family after becoming lost in a hostile forest while working as an emissary for the King of France.",
+      "popularity": 1.4503,
+      "poster_path": "/sNyfKJUgabNcKSOw7C7hag4ANiU.jpg",
+      "release_date": "2023-10-25",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.4,
+      "vote_count": 83
+    }
+  ]
+}

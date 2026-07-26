@@ -1,0 +1,27 @@
+{
+  "query": "Whiplash",
+  "year": 2013,
+  "note": "short film",
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/sO70LyX3CHDNimbUwdGqL6pjrD3.jpg",
+      "genre_ids": [
+        18,
+        10402
+      ],
+      "id": 367412,
+      "title": "Whiplash",
+      "original_language": "en",
+      "original_title": "Whiplash",
+      "overview": "A ferocious, bullying music teacher teaches a dedicated student.",
+      "popularity": 1.4124,
+      "poster_path": "/2yQkiGAmztaBkGLjVIrHUYHTex5.jpg",
+      "release_date": "2013-01-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.779,
+      "vote_count": 419
+    }
+  ]
+}
