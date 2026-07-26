@@ -32,23 +32,45 @@ class ShrunkEffect:
 
 
 def estimate_k(group_values: dict[int, list[float]]) -> float:
-    """The shrinkage constant: within-group variance over between-group variance."""
+    """The shrinkage constant: within-group variance over between-group variance.
+
+    Uses the one-way random-effects (ANOVA) moment estimator. An earlier version corrected the
+    observed spread of group means by within/mean_n, which is wrong when group sizes are as skewed
+    as they are here: roughly 700 of 782 editors appear on a single film, so mean_n was about 2,
+    the noise correction was far too small, real between-person spread was overstated, and k came
+    out near 3 — leaving 68% of each raw mean unshrunk. Shuffled ratings then produced effects
+    almost as large as real ones.
+
+    MSW is within-group mean square, MSB between-group, and n0 the effective group size that
+    accounts for the imbalance.
+    """
     counts = np.array([len(v) for v in group_values.values()], dtype=float)
     means = np.array([float(np.mean(v)) for v in group_values.values()], dtype=float)
-
     flat = np.array([x for values in group_values.values() for x in values], dtype=float)
-    if len(flat) < 2 or len(means) < 2:
+
+    n_total = float(counts.sum())
+    n_groups = len(counts)
+    if n_groups < 2 or n_total <= n_groups:
         return float("inf")
 
-    within = float(flat.var(ddof=1))
+    grand_mean = float(flat.mean())
+    ss_within = float(
+        sum(((np.array(v, dtype=float) - np.mean(v)) ** 2).sum() for v in group_values.values())
+    )
+    ms_within = ss_within / (n_total - n_groups)
 
-    # Observed spread of group means overstates the truth by roughly within/n, because each mean
-    # carries its own sampling noise. Subtracting that leaves the genuine spread.
-    observed = float(means.var(ddof=1))
-    mean_n = float(counts.mean())
-    between = max(observed - within / mean_n, MIN_BETWEEN_VARIANCE)
+    ss_between = float((counts * (means - grand_mean) ** 2).sum())
+    ms_between = ss_between / (n_groups - 1)
 
-    return within / between
+    # Effective group size under imbalance. With every group the same size this reduces to n.
+    n0 = (n_total - float((counts**2).sum()) / n_total) / (n_groups - 1)
+    if n0 <= 0:
+        return float("inf")
+
+    between = max((ms_between - ms_within) / n0, MIN_BETWEEN_VARIANCE)
+    if ms_within <= 0:
+        return 0.0
+    return ms_within / between
 
 
 def shrink(group_values: dict[int, list[float]], k: float | None = None) -> dict[int, ShrunkEffect]:

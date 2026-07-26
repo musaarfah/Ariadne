@@ -10,8 +10,9 @@ from ariadne.core.catalog.fixtures import FIXTURE_DIR, capture_all
 from ariadne.core.catalog.pipeline import ResolveStats, resolve_upload
 from ariadne.core.catalog.tmdb import TmdbAuthError, TmdbClient, TmdbError
 from ariadne.core.evaluation.audit import read_verdicts, sample_cases, write_review_file
+from ariadne.core.evaluation.controls import build_null, shuffle_test, sweep
 from ariadne.core.evaluation.coverage import build_coverage, pooled_regions, role_order
-from ariadne.core.evaluation.dataset import load_dataset
+from ariadne.core.evaluation.dataset import load_dataset, person_names
 from ariadne.core.evaluation.harness import MODEL_VERSION, evaluate, run_payload
 from ariadne.core.evaluation.level1 import build_report, upload_by_token
 from ariadne.core.evaluation.metrics import (
@@ -23,7 +24,8 @@ from ariadne.core.evaluation.metrics import (
 )
 from ariadne.core.ingest.export import parse_export
 from ariadne.core.ingest.persist import persist_export
-from ariadne.db.models import AnalysisRun, Upload
+from ariadne.core.taste.crew import MIN_FILMS_TO_REPORT, CrewModel
+from ariadne.db.models import AnalysisRun, CrewEffect, Upload
 from ariadne.db.session import get_engine, session_scope
 from ariadne.settings import get_settings
 
@@ -572,6 +574,235 @@ def evaluate_command(
     if save:
         typer.echo("")
         typer.echo("run saved to analysis_runs")
+
+
+@app.command("fit")
+def fit(
+    token: str = typer.Argument(..., help="Upload token"),
+    role: str | None = typer.Option(None, "--role", help="Show one role only"),
+    top: int = typer.Option(10, "--top", help="How many people to list per role"),
+    save: bool = typer.Option(True, "--save/--no-save", help="Persist effects to crew_effects"),
+) -> None:
+    """Fit Track 1 crew effects and show them per role."""
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        films = load_dataset(session, upload.id)
+        model = CrewModel()
+        model.fit(films)
+
+        wanted = (role,) if role else model.roles
+        # Names are fetched for what will actually be shown. Fetching by top-effect rank instead
+        # missed the reportable people entirely, because a 1-film person can outrank them on raw
+        # magnitude even after shrinkage.
+        shown = [e for r in wanted for e in model.reportable_effects(r)[:top]]
+        needed: set[int] = {e.person_id for e in shown}
+        needed |= {e.inseparable_from for e in shown if e.inseparable_from is not None}
+        names = person_names(session, needed)
+
+        if save:
+            run = AnalysisRun(
+                upload_id=upload.id,
+                model_version="1.7-track1",
+                config={"roles": list(model.roles), "min_films": MIN_FILMS_TO_REPORT},
+                metrics={},
+            )
+            session.add(run)
+            session.flush()
+            session.add_all(
+                CrewEffect(
+                    run_id=run.id,
+                    person_id=e.person_id,
+                    role=e.role,
+                    effect=e.effect,
+                    stderr=e.stderr,
+                    n_films=e.n_films,
+                    inseparable_from_person_id=e.inseparable_from,
+                )
+                for r in model.roles
+                for e in model.effects(r)
+            )
+
+    typer.echo(f"films {len(films)}   reporting threshold: {MIN_FILMS_TO_REPORT}+ films")
+
+    for r in wanted:
+        effects = model.effects(r)
+        reportable = [e for e in effects if e.reportable]
+        typer.echo("")
+        typer.echo(f"=== {r} ===")
+        typer.echo(
+            f"  {len(effects)} people fitted, {len(reportable)} with {MIN_FILMS_TO_REPORT}+ films"
+        )
+        if not reportable:
+            typer.echo("  INSUFFICIENT DATA — nobody in this role clears the threshold")
+            continue
+
+        typer.echo(f"  {'effect':>8}{'raw':>8}{'n':>5}{'se':>7}  person")
+        for e in reportable[:top]:
+            label = names.get(e.person_id, str(e.person_id))
+            typer.echo(
+                f"  {e.effect:>+8.3f}{e.raw_mean:>+8.3f}{e.n_films:>5}{e.stderr:>7.3f}  {label}"
+            )
+            if e.inseparable_from == e.person_id:
+                # A writer-director: their writing cannot be told apart from their own work
+                # behind the camera, which is a real limit rather than a missing feature.
+                typer.echo(
+                    f"           cannot be separated from their own direction "
+                    f"({e.n_films}/{e.n_films} films)"
+                )
+            elif e.inseparable_from is not None:
+                other = names.get(e.inseparable_from, str(e.inseparable_from))
+                typer.echo(
+                    f"           cannot be separated from {other} ({e.n_films}/{e.n_films} films)"
+                )
+
+        withheld = len(effects) - len(reportable)
+        if withheld:
+            typer.echo(f"  ({withheld} people withheld: fewer than {MIN_FILMS_TO_REPORT} films)")
+
+    if save:
+        typer.echo("")
+        typer.echo("effects saved to crew_effects")
+
+
+@app.command("significance")
+def significance(
+    token: str = typer.Argument(..., help="Upload token"),
+    permutations: int = typer.Option(200, "--permutations", help="Permutations for the null"),
+) -> None:
+    """Test observed crew effects against a permutation null.
+
+    The null is over the largest effect per permutation, which corrects for testing hundreds of
+    people at once: clearing it means beating the best that noise managed anywhere.
+    """
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+        model = CrewModel()
+        model.fit(films)
+
+        shown = [e for r in model.roles for e in model.reportable_effects(r)[:3]]
+        names = person_names(session, {e.person_id for e in shown})
+
+    typer.echo(
+        f"films {len(films)}   permutations {permutations}   threshold {MIN_FILMS_TO_REPORT}+"
+    )
+    typer.echo("")
+    typer.echo(f"  {'role':<20}{'null p50':>10}{'null p95':>10}{'observed':>10}   verdict")
+
+    any_significant = False
+    detail: list[str] = []
+    for r in model.roles:
+        null = build_null(films, r, permutations=permutations)
+        reportable = model.reportable_effects(r)
+        if not reportable:
+            typer.echo(
+                f"  {r:<20}{null.percentile(50):>10.3f}{null.critical_value:>10.3f}"
+                f"{'—':>10}   no one above the film threshold"
+            )
+            continue
+
+        best = max(reportable, key=lambda e: abs(e.effect))
+        significant = abs(best.effect) > null.critical_value
+        any_significant = any_significant or significant
+        verdict = "SIGNIFICANT" if significant else "not distinguishable from noise"
+        typer.echo(
+            f"  {r:<20}{null.percentile(50):>10.3f}{null.critical_value:>10.3f}"
+            f"{abs(best.effect):>10.3f}   {verdict}"
+        )
+        detail.append(
+            f"  {r}: {names.get(best.person_id, str(best.person_id))} "
+            f"{best.effect:+.3f} on {best.n_films} films, p = {null.p_value(best.effect):.3f}"
+        )
+
+    typer.echo("")
+    typer.echo("STRONGEST EFFECT PER ROLE")
+    for line in detail:
+        typer.echo(line)
+
+    typer.echo("")
+    if any_significant:
+        typer.echo("At least one role has an effect beyond what noise produced.")
+    else:
+        typer.echo("No role has an effect beyond the permutation null. On this data, at this")
+        typer.echo("sample size, no below-the-line crew effect can be distinguished from noise.")
+
+
+@app.command("controls")
+def controls(
+    token: str = typer.Argument(..., help="Upload token"),
+    role: str = typer.Option("editor", "--role", help="Role for the synthetic sweep"),
+    trials: int = typer.Option(12, "--trials", help="Trials per sweep cell"),
+    skip_sweep: bool = typer.Option(False, "--skip-sweep", help="Shuffle test only"),
+) -> None:
+    """Run the negative controls: shuffle test, then the synthetic detection-floor sweep."""
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+        films = load_dataset(session, upload.id)
+
+    typer.echo("=== SHUFFLE TEST ===")
+    typer.echo("  ratings permuted between films; every effect must collapse toward zero")
+    result = shuffle_test(films)
+    typer.echo("")
+    typer.echo(f"  {'':<24}{'real':>10}{'shuffled':>10}")
+    typer.echo(
+        f"  {'largest effect':<24}{result.real_max_effect:>10.3f}"
+        f"{result.shuffled_max_effect:>10.3f}"
+    )
+    typer.echo(
+        f"  {'reportable people':<24}{result.real_reportable:>10}{result.shuffled_reportable:>10}"
+    )
+    typer.echo(
+        f"  {f'effects >= {result.threshold}':<24}{result.real_above_threshold:>10}"
+        f"{result.shuffled_above_threshold:>10}"
+    )
+    typer.echo("")
+    typer.echo(f"  largest-effect ratio  {result.max_ratio:.3f}  (must be <= 0.5)")
+    typer.echo(f"  above-threshold ratio {result.count_ratio:.3f}  (must be <= 0.1)")
+    verdict = "PASS — signal collapsed" if result.collapsed else "FAIL — SHRINKAGE IS BROKEN"
+    typer.echo(f"  VERDICT: {verdict}")
+
+    if skip_sweep:
+        return
+
+    typer.echo("")
+    typer.echo(f"=== SYNTHETIC SWEEP ({role}) ===")
+    typer.echo("  a known effect is planted in one person, then recovered or not")
+    swept = sweep(films, role, trials=trials)
+
+    sizes = sorted({c.effect_size for c in swept.cells})
+    counts = sorted({c.n_films for c in swept.cells})
+    typer.echo("")
+    typer.echo("  recovery rate (planted person in top 3 of the role)")
+    typer.echo("  effect  " + "".join(f"{f'n={n}':>9}" for n in counts))
+    for size in sizes:
+        cells = {c.n_films: c for c in swept.cells if c.effect_size == size}
+        row = "".join(
+            f"{cells[n].rate:>8.2f}{'*' if cells[n].detected else ' '}"
+            if n in cells
+            else f"{'-':>9}"
+            for n in counts
+        )
+        typer.echo(f"  {size:>+6.2f}  {row}")
+    typer.echo("")
+    typer.echo("  * detected: recovered in at least 80% of trials")
+    typer.echo("")
+    typer.echo("  DETECTION FLOOR — fewest films needed per effect size")
+    for size in sizes:
+        floor = swept.floor_for(size)
+        typer.echo(
+            f"    {size:>+5.2f} stars: {floor if floor else 'not detected at any tested count'}"
+        )
 
 
 if __name__ == "__main__":
