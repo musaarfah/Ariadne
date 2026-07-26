@@ -482,3 +482,88 @@ parameters.
 **Why.** Only the `%` operator is index-backed; a `similarity() >= x` predicate would force a full
 scan, which is precisely what F17/D42 identified as the reason Postgres is here at all.
 **Status.** Active.
+
+---
+
+## Phase: the data-quality gate — 2026-07-26
+
+### D52 — A numeral guard, because trigram similarity cannot see sequels
+**Context.** The first full-library run produced **8 wrong matches**, all of them a film resolved to
+its own sibling: *Gangs of Wasseypur Part 2* → *Part 1*, *Kill Bill Vol. 1* → *Vol. 2*,
+*Nymphomaniac Vol. II* → *Vol. I*, *Harry Potter … Part 1* → *Part 2*, *Back to the Future Part III* →
+*Part II*, *Jatt & Juliet 2* → *Jatt & Juliet*, *Justice League Dark* → *Justice League*, and
+*Whiplash* (2013 short) → *Whiplash* (2014 feature).
+**Cause.** Trigram similarity is nearly blind to numerals. *Back to the Future Part III* against
+*Part II* scores **0.963**; *Harry Potter … Part 1* against *Part 2* scores 0.907. The numeral carries
+almost all of the meaning and almost none of the trigram weight.
+**Decision.** Compare sequence markers separately from similarity. Roman numerals and number words
+fold to digits, so "Part One", "Part I" and "Part 1" are one marker. A candidate is rejected outright
+when our title carries a numeral it lacks, or when both carry different ones.
+**Asymmetry, deliberately.** TMDB routinely holds a *longer* title for the same film — *Glass Onion: A
+Knives Out Mystery*, *… Dead Reckoning Part One* — so extra words or numerals on TMDB's side prove
+nothing. Extra words on *our* side mean we would be discarding what identifies the film, so
+*Justice League Dark* cannot match *Justice League*.
+**Status.** Active. All 8 cases are now regression tests.
+
+### D53 — The local catalog answers only on an exact year
+**Context.** *Whiplash* (2013) resolved to the 2014 feature. The 2014 film had already been cached, and
+the local-catalog lookup offered it as a near-year candidate — one TMDB's own year-filtered search
+would never have returned.
+**Decision.** `local_candidates` requires `year == year`, not the ±1 window the API path uses. Year
+disagreements go to the API.
+**Why.** The local path is an optimisation and should be the conservative one. TMDB's search already
+constrains candidates by year, so relaxing the constraint locally created a failure mode that existed
+nowhere else.
+**Status.** Active.
+
+### D54 — Test the path the data takes, not the path that is easy to fixture
+**Context.** The 36-case regression set passes and contains *Whiplash* 2013 vs 2014 explicitly. The
+resolver still got it wrong in production.
+**Cause.** The regression set is built from recorded API search fixtures, and TMDB's year filter means
+the 2013 query returns only the short. The bug lived entirely in the local-catalog path, which had no
+equivalent test.
+**Decision.** Integration tests now cover local-catalog resolution directly, including the exact-year
+restriction. Treat "the regression set passes" as evidence about one path only.
+**Why.** This is the more uncomfortable lesson of 1.4: **a green suite gave false confidence about the
+single case it was written to protect.** Coverage of code is not coverage of paths the data actually
+takes.
+**Status.** Active.
+
+### D55 — A TMDB-id collision check is a first-class integrity metric
+**Context.** The 8 wrong matches were found by noticing 1,296 resolutions mapped to only 1,288 distinct
+films, then listing the duplicates. The audit would have found them eventually; this found them in one
+query.
+**Decision.** Report distinct-films-per-resolution and list every TMDB id claimed by more than one
+Letterboxd entry as part of the Level 1 metrics.
+**Why.** Two different films resolving to one id is almost always an error and is cheap to detect. It is
+the highest-yield integrity check discovered so far.
+**Status.** Active.
+
+### D56 — Precision is measured over matches; refusals are reported separately
+**Context.** The audit covers five strata, two of which are refusals (television, unresolved).
+**Decision.** Precision counts only `exact`, `trigram` and `dominant`. Television and unresolved get
+their own accuracy figure.
+**Why.** A refusal is not a wrong answer. Folding refusals into precision would report recall as though
+it were precision, and would have turned a 100% precision result into 96.6% by mixing in three known
+false negatives — a number that means nothing.
+**Status.** Active.
+
+### D57 — Audit the risky strata exhaustively, sample only the safe one
+**Context.** A uniform 100-case sample of 1,297 resolutions would have been roughly 94 `exact` matches
+and a handful of everything else.
+**Decision.** Audit every non-exact outcome (125 cases) and sample the `exact` stratum (50 of 1,220,
+fixed seed).
+**Why.** It measures the paths that can actually be wrong with no sampling error, and spends the
+sampling budget on the stratum where a mistake is least likely. A uniform sample would have measured
+the safe path precisely and the risky paths barely at all.
+**Status.** Active.
+
+### D58 — Leave the three subtitle false negatives unfixed
+**Context.** F31 — `Glass Onion` and `Wake Up Dead Man` are refused because TMDB appends
+": A Knives Out Mystery", scoring 0.38 and 0.46.
+**Decision.** Accept the loss for now.
+**Why.** Accepting prefix matches would also accept `Obi-Wan Kenobi: A Jedi's Return` for the
+miniseries, converting a correct television call into a wrong film match. Three films out of 1,297 is
+0.23%; trading audited 100% precision for that is a bad exchange. Precision protects every downstream
+metric, recall costs three rows.
+**Status.** Active, revisit at 1.5.
