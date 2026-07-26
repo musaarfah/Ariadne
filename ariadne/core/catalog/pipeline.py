@@ -85,10 +85,15 @@ def resolve_one(
     stats: ResolveStats,
     *,
     check_television: bool = True,
+    retry_failed: bool = False,
 ) -> Resolution:
     stats.total += 1
 
     existing = cached_resolution(session, letterboxd_uri)
+    # A cached failure is worth retrying after the resolver changes, but a cached success is
+    # not — re-resolving what already worked only spends rate budget.
+    if existing is not None and retry_failed and existing.tmdb_id is None:
+        existing = None
     if existing is not None:
         stats.from_cache += 1
         _count_outcome(stats, existing.match_method)
@@ -110,8 +115,10 @@ def resolve_one(
             matched = next((r for r in results if r.get("id") == outcome.tmdb_id), None)
             if matched is not None:
                 upsert_film(session, matched)
-        elif check_television and _looks_like_television(
-            client.search_tv(title, year), title, year
+        elif (
+            check_television
+            and outcome.no_film_candidate
+            and _looks_like_television(client.search_tv(title, year), title, year)
         ):
             outcome = ResolutionOutcome(
                 None,
@@ -140,6 +147,7 @@ def resolve_upload(
     upload_id: Any,
     limit: int | None = None,
     on_progress: Any = None,
+    retry_failed: bool = False,
 ) -> ResolveStats:
     """Resolve every rated film on an upload, taking titles and years from its ratings."""
     stats = ResolveStats()
@@ -156,7 +164,7 @@ def resolve_upload(
 
     for index, (uri, name, year) in enumerate(films, start=1):
         try:
-            resolve_one(session, client, uri, name, year, stats)
+            resolve_one(session, client, uri, name, year, stats, retry_failed=retry_failed)
         except TmdbError:
             stats.errors += 1
         if on_progress is not None:

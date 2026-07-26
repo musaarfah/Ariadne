@@ -4,6 +4,8 @@ from ariadne.core.catalog.normalize import (
     comparison_forms,
     loose_title,
     normalize_title,
+    sequence_markers,
+    titles_are_distinct,
     without_leading_article,
 )
 from ariadne.core.catalog.similarity import similarity, trigrams
@@ -120,3 +122,93 @@ def test_empty_strings_score_zero():
     # Matches Postgres, which returns 0 rather than 1 for two empty strings.
     assert similarity("", "") == 0.0
     assert similarity("", "something") == 0.0
+
+
+# --- distinguishing sequels from their siblings ----------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("query", "candidate"),
+    [
+        ("Gangs of Wasseypur – Part 2", "Gangs of Wasseypur - Part 1"),
+        ("Kill Bill: Vol. 1", "Kill Bill: Vol. 2"),
+        ("Nymphomaniac: Vol. II", "Nymphomaniac: Vol. I"),
+        (
+            "Harry Potter and the Deathly Hallows: Part 1",
+            "Harry Potter and the Deathly Hallows: Part 2",
+        ),
+        ("Back to the Future Part III", "Back to the Future Part II"),
+        ("Jatt & Juliet 2", "Jatt & Juliet"),
+        ("Justice League Dark", "Justice League"),
+    ],
+)
+def test_siblings_are_distinct(query: str, candidate: str):
+    """Every one of these was a real wrong match in the first full-library run.
+
+    Trigram similarity cannot separate them — Back to the Future Part III against Part II
+    scores 0.963 — so the numeral has to be compared on its own.
+    """
+    assert similarity(normalize_title(query), normalize_title(candidate)) > 0.7
+    assert titles_are_distinct(query, candidate)
+
+
+@pytest.mark.parametrize(
+    ("query", "candidate"),
+    [
+        # TMDB holding a longer title for the same film is normal and must not be rejected.
+        ("Mission: Impossible – Dead Reckoning", "Mission: Impossible - Dead Reckoning Part One"),
+        ("Glass Onion", "Glass Onion: A Knives Out Mystery"),
+        ("Whiplash", "Whiplash"),
+        ("2001: A Space Odyssey", "2001: A Space Odyssey"),
+        ("Alien³", "Alien³"),
+        (
+            "Star Wars: Episode II – Attack of the Clones",
+            "Star Wars: Episode II - Attack of the Clones",
+        ),
+        # "Vol." and "Volume" are the same word.
+        ("Kill Bill: Vol. 1", "Kill Bill: Volume 1"),
+        # British/American spelling. Rejecting this cost a correct match in the second run.
+        ("Three Colours: Blue", "Three Colors: Blue"),
+        ("The Colour of Pomegranates", "The Color of Pomegranates"),
+    ],
+)
+def test_same_film_is_not_distinct(query: str, candidate: str):
+    assert not titles_are_distinct(query, candidate)
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        ("Back to the Future Part III", {"3"}),
+        ("Kill Bill: Vol. 1", {"1"}),
+        ("Nymphomaniac: Vol. II", {"2"}),
+        ("Mission: Impossible - Dead Reckoning Part One", {"1"}),
+        ("2001: A Space Odyssey", {"2001"}),
+        ("Whiplash", set()),
+        # NFKC folds the superscript, but "alien3" is one token, not a numeral.
+        ("Alien³", set()),
+    ],
+)
+def test_sequence_markers(title: str, expected: set[str]):
+    assert sequence_markers(title) == expected
+
+
+def test_word_order_is_distinguishing():
+    """ "The Breaking Ice" is not "Breaking the Ice", but trigram similarity scores them 1.000."""
+    assert (
+        similarity(normalize_title("The Breaking Ice"), normalize_title("Breaking the Ice")) == 1.0
+    )
+    assert titles_are_distinct("The Breaking Ice", "Breaking the Ice")
+
+
+@pytest.mark.parametrize(
+    ("query", "candidate"),
+    [
+        # A word substitution among insignificant words, not a reordering.
+        ("Kill Bill: Vol. 1", "Kill Bill: Volume 1"),
+        # One extra article, not a reordering.
+        ("Beauty and the Beast", "The Beauty and the Beast"),
+    ],
+)
+def test_word_order_rule_needs_a_true_permutation(query: str, candidate: str):
+    assert not titles_are_distinct(query, candidate)

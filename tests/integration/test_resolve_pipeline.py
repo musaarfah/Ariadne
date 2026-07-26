@@ -160,12 +160,17 @@ def test_local_lookup_tolerates_the_dash_difference(session: Session):
     assert [c["id"] for c in candidates] == [117691]
 
 
-def test_local_lookup_respects_the_year_window(session: Session):
+def test_local_lookup_requires_an_exact_year(session: Session):
+    """The local path is deliberately stricter than the API path.
+
+    TMDB's search filters by year, so a near-year candidate can only reach the resolver from
+    the local catalog. It did: with the 2014 Whiplash cached, a lookup for Whiplash (2013)
+    found it locally and resolved the short film to the feature.
+    """
     upsert_film(session, GODFATHER)
     assert local_candidates(session, "The Godfather", 1972)
-    assert local_candidates(session, "The Godfather", 1973)
-    # Two years out is a rejection, not a near miss.
-    assert local_candidates(session, "The Godfather", 1975) == []
+    assert local_candidates(session, "The Godfather", 1973) == []
+    assert local_candidates(session, "The Godfather", 1971) == []
 
 
 def test_local_lookup_needs_a_year(session: Session):

@@ -12,11 +12,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ariadne.core.catalog.normalize import normalize_title
-from ariadne.core.catalog.resolve import (
-    CONSIDER_SIMILARITY,
-    MAX_YEAR_GAP,
-    ResolutionOutcome,
-)
+from ariadne.core.catalog.resolve import CONSIDER_SIMILARITY, ResolutionOutcome
 from ariadne.db.models import Film, Person, Resolution
 
 # Local candidates are cheap, but a runaway query on a large catalog is not.
@@ -136,6 +132,12 @@ def local_candidates(session: Session, title: str, year: int | None) -> list[dic
     Returned as payload dicts so the caller can score local and remote candidates through
     exactly the same code path.
 
+    Restricted to an **exact** year, unlike the API path. TMDB's search already filters by
+    year, so a near-year candidate can only reach the resolver from here — and it did: with the
+    2014 Whiplash already cached, a lookup for Whiplash (2013) found it locally, matched the
+    title exactly, and resolved the short film to the feature. The local path is an
+    optimisation, so it stays conservative and leaves year disagreements to the API.
+
     The `%` operator is what uses the GIN trigram index; `similarity() >= x` would not. Its
     cutoff comes from pg_trgm.similarity_threshold, set here per transaction so the query does
     not depend on server configuration.
@@ -156,8 +158,7 @@ def local_candidates(session: Session, title: str, year: int | None) -> list[dic
     rows = session.execute(
         select(Film)
         .where(
-            Film.year.is_not(None),
-            Film.year.between(year - MAX_YEAR_GAP, year + MAX_YEAR_GAP),
+            Film.year == year,
             Film.normalized_title.op("%")(normalized),
         )
         .order_by(text("similarity(films.normalized_title, :normalized) DESC"))

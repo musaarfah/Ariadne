@@ -21,7 +21,11 @@ clear the title threshold *and* the year rule.
 from dataclasses import dataclass
 from typing import Any
 
-from ariadne.core.catalog.normalize import comparison_forms, normalize_title
+from ariadne.core.catalog.normalize import (
+    comparison_forms,
+    normalize_title,
+    titles_are_distinct,
+)
 from ariadne.core.catalog.similarity import similarity
 from ariadne.db.models import MatchMethod
 
@@ -79,6 +83,13 @@ class ResolutionOutcome:
     reason: str
     candidate: Candidate | None = None
 
+    # True only when no plausible film existed at all. False when a film was found but the
+    # choice between several was ambiguous. The television check may only run in the first
+    # case: "Missing" (2018) failed because two films share that title and year, and calling
+    # that television because a series is also named Missing would be a different claim
+    # entirely.
+    no_film_candidate: bool = False
+
     @property
     def resolved(self) -> bool:
         return self.tmdb_id is not None
@@ -112,6 +123,11 @@ def build_candidate(payload: dict[str, Any], title: str, year: int | None) -> Ca
     if isinstance(original_title, str) and original_title != candidate_title:
         titles.append(original_title)
 
+    # Drop any title form that names a different film despite scoring as similar — a sequel,
+    # a volume, or a namesake missing a distinguishing word. Trigram similarity cannot see
+    # the difference: "Back to the Future Part III" against "Part II" scores 0.963.
+    comparable = [t for t in titles if not titles_are_distinct(title, t)]
+
     candidate_year = _release_year(payload)
     return Candidate(
         tmdb_id=tmdb_id,
@@ -119,7 +135,9 @@ def build_candidate(payload: dict[str, Any], title: str, year: int | None) -> Ca
         original_title=original_title if isinstance(original_title, str) else None,
         year=candidate_year,
         vote_count=payload.get("vote_count") or 0,
-        title_similarity=_best_similarity(comparison_forms(title), titles),
+        title_similarity=(
+            _best_similarity(comparison_forms(title), comparable) if comparable else 0.0
+        ),
         year_gap=None if (year is None or candidate_year is None) else abs(candidate_year - year),
     )
 
@@ -212,7 +230,13 @@ def choose(candidates: list[Candidate], year: int | None) -> ResolutionOutcome:
     """
     plausible = [c for c in candidates if c.title_similarity >= CONSIDER_SIMILARITY]
     if not plausible:
-        return ResolutionOutcome(None, MatchMethod.UNRESOLVED, None, "no candidate above threshold")
+        return ResolutionOutcome(
+            None,
+            MatchMethod.UNRESOLVED,
+            None,
+            "no candidate above threshold",
+            no_film_candidate=True,
+        )
 
     if year is None:
         exact = [c for c in plausible if c.has_exact_title]
@@ -221,13 +245,21 @@ def choose(candidates: list[Candidate], year: int | None) -> ResolutionOutcome:
                 exact[0].tmdb_id, MatchMethod.EXACT, 1.0, "exact title, no year available", exact[0]
             )
         return ResolutionOutcome(
-            None, MatchMethod.UNRESOLVED, None, "no year, and title is not uniquely exact"
+            None,
+            MatchMethod.UNRESOLVED,
+            None,
+            "no year, and title is not uniquely exact",
+            no_film_candidate=True,
         )
 
     in_window = [c for c in plausible if c.year_gap is not None and c.year_gap <= MAX_YEAR_GAP]
     if not in_window:
         return ResolutionOutcome(
-            None, MatchMethod.UNRESOLVED, None, f"no candidate within {MAX_YEAR_GAP} year(s)"
+            None,
+            MatchMethod.UNRESOLVED,
+            None,
+            f"no candidate within {MAX_YEAR_GAP} year(s)",
+            no_film_candidate=True,
         )
 
     exact_titles = [c for c in in_window if c.has_exact_title]
@@ -244,6 +276,7 @@ def choose(candidates: list[Candidate], year: int | None) -> ResolutionOutcome:
             MatchMethod.UNRESOLVED,
             None,
             f"best title similarity {best.title_similarity:.2f} below {ACCEPT_SIMILARITY}",
+            no_film_candidate=True,
         )
 
     exact_year = [c for c in acceptable if c.has_exact_year]
