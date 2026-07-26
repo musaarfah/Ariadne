@@ -337,3 +337,148 @@ entry; mark it superseded and add a new one.
 **Why.** The chain is the artifact. A log showing a decision reversed by evidence is a stronger signal
 than one where everything was right the first time.
 **Status.** Active.
+
+---
+
+## Phase: building the resolver — 2026-07-26
+
+### D38 — Title exactness outranks the year
+**Context.** D31 specified a year rule but left the priority between title and year implicit. The
+first working implementation checked exact-year first.
+**Consequence observed.** `Salò, or the 120 Days of Sodom` resolved to
+**`Backstage on the Set of Salò, or the 120 Days of Sodom`**, because that documentary carries
+Letterboxd's stated 1975 while the film itself is dated 1976. The wrong crew would have entered the
+profile with nothing downstream looking wrong.
+**Decision.** Candidates with an exactly matching title are considered first; the year discriminates
+*within* that set. Only if no exact title exists anywhere in the year window is a fuzzy match
+considered.
+**Why.** F16. Refusing is cheap and visible; a plausible wrong match is neither.
+**Status.** Active. Refines D31.
+
+### D39 — A non-exact title must clear 0.75 similarity
+**Context.** The first threshold, 0.30, accepted `Obi-Wan Kenobi` → `Obi-Wan Kenobi: A Jedi's Return`
+(a documentary) at 0.45.
+**Decision.** `ACCEPT_SIMILARITY = 0.75`.
+**Why.** Calibrated against measured cases rather than chosen: `Mission: Impossible – Dead Reckoning`
+→ `... Part One` scores 0.79 and must be accepted (TMDB renamed the film); the Salò backstage
+documentary scores 0.65 and the Obi-Wan documentary 0.45, both of which must be rejected. Comfortable
+margin on both sides.
+**Status.** Active. Delivers the F13/D33 requirement.
+
+### D40 — Vote dominance resolves duplicate title-and-year entries
+**Context.** F15 — three collisions have multiple TMDB entries sharing title *and* year, so the year
+rule cannot separate them. Refusing all of them would cost 3 of 36 regression cases.
+**Decision.** Accept the leader only if it has ≥50 votes and ≥10× the runner-up. Otherwise refuse.
+Recorded as a distinct `MatchMethod.DOMINANT` so these are countable and auditable separately.
+**Alternatives.** Refuse always (costs ~8% of resolution rate); take the most popular unconditionally
+(guessing).
+**Why.** The observed margins are overwhelming — Aladdin 12,120 vs 68, Frozen 2,029 vs 2, Beauty and
+the Beast 16,079 vs 0. The duplicates are bootlegs, shorts and a museum filming. Crucially this uses
+popularity to disambiguate **identity**, not to predict **taste**, so it does not reintroduce the
+prestige confound of D6.
+**Status.** Active.
+
+### D41 — Reimplement pg_trgm in Python rather than use difflib
+**Context.** Resolution scores API candidates in memory but will score our own catalog in Postgres.
+**Decision.** Implement pg_trgm's exact definition in Python; assert parity against Postgres in an
+integration test.
+**Why.** A threshold calibrated on one path would be wrong on the other if the measures differed.
+Verified: 0 mismatches over 20 pairs, identical trigram sets for ASCII, and multibyte values agreeing
+to 3.8e-08.
+**Status.** Active.
+
+### D42 — Correction: pg_trgm's value is the local catalog, not API candidates
+**Context.** D20 justified Postgres partly on `pg_trgm` powering "the resolver's fuzzy fallback."
+**Correction.** That reason was wrong. Candidates arrive from the API, number at most ~20, and are
+scored in memory — no index helps. `pg_trgm` earns its place on the *local catalog* fast path, which
+avoids an API call once films are cached. That is precisely the Stage 2 economics of resolving the
+15th recruited account.
+**Status.** The conclusion of D20 stands; this entry records that one of its three stated reasons was
+imprecise. See F17.
+
+### D43 — Add a `reason` column to resolutions
+**Decision.** Store the human-readable reason the resolver decided as it did.
+**Why.** The 1.4 hand audit needs to see *which rule fired*, not just an id. "Exact title, year off by
+1" versus "votes dominate" is the difference between an audit and staring at numbers.
+**Status.** Active.
+
+### D44 — Match Postgres on `similarity('', '')`
+**Context.** Our implementation returned 1.0 for two empty strings; Postgres returns 0.0.
+**Decision.** Return 0.0.
+**Why.** Agreement is this module's entire purpose (D41), and it is the safer answer — an empty title
+should match nothing.
+**Status.** Active.
+
+### D45 — Parity tests must respect float4 and trigram hashing
+**Context.** An initial parity test demanded 1e-9 agreement and "failed" on 8 pairs that were
+correct.
+**Decision.** Assert `rel=1e-6`; compare trigram *sets* only for ASCII input and *values* for
+multibyte.
+**Why.** F18 — `similarity()` returns `real` (~1.2e-07 relative precision), and `show_trgm()` hashes
+multibyte trigrams to hex. The tolerance was unsatisfiable, not the code wrong.
+**Status.** Active.
+
+### D46 — NFKC is load-bearing (revises D32)
+**Context.** D32 demoted NFKC to "a cheap safeguard" after F10 found TMDB stores the same codepoints
+Letterboxd exports.
+**Correction.** Measuring the whole export found **U+00A0, a no-break space**, in two Star Wars
+titles. It is invisible on screen, and NFKC is the only thing that folds it. Without NFKC both films
+fail to resolve and nobody inspecting the titles could see why.
+**Decision.** Keep NFKC, applied before dash folding. Store the character as an explicit `\u00a0`
+escape in the fixtures so no edit can silently lose it.
+**Why.** F19.
+**Status.** Active. **Supersedes** the framing in D32; dash folding is still the highest-volume fix
+(12 titles) but NFKC is not optional.
+
+### D47 — Ratings carry the title and year; resolutions hold only resolver output
+**Context.** `ratings` stored only the Letterboxd URI, so nothing downstream knew *what* to resolve.
+The first fix seeded a `resolutions` row per rating at ingest, carrying name and year with method
+`UNRESOLVED`.
+**Consequence observed.** Those seed rows were indistinguishable from genuine cache hits, so the
+resolver read them back as "already attempted" and resolved nothing at all — 0/200 on the first run.
+**Decision.** Put `name` and `year` on `ratings`. Drop the seeding entirely. A row in `resolutions`
+now unambiguously means "attempted".
+**Alternatives.** Add a `PENDING` enum value to represent the seeded state.
+**Why.** Removing the ambiguity beats adding a state to describe it. Fewer states, no third enum
+migration, and the two tables get cleaner responsibilities: `ratings` records what the user's export
+said, `resolutions` records what the resolver concluded.
+**Status.** Active.
+
+### D48 — Television is recorded on resolutions, never in films
+**Context.** `films.media_type` existed to hold TV so it could be "excluded with a reported count".
+**Correction.** That cannot work. **TMDB movie ids and TV ids are separate namespaces** and can collide
+on the same integer, while `films.tmdb_id` is the primary key — storing a series could silently
+overwrite or be mistaken for an unrelated film.
+**Decision.** Drop `films.media_type`. Add `MatchMethod.TELEVISION`, so a Letterboxd TV entry is a
+resolution outcome with a NULL `tmdb_id`. The exclusion count becomes a one-line query.
+**Why.** Keeps the count reportable as F13 requires, with no possibility of a wrong join. A test
+asserts a TV id never enters `films`.
+**Status.** Active. Supersedes the `media_type` design.
+
+### D49 — Refuse `Split` rather than let popularity cross a year gap
+**Context.** Letterboxd dates Shyamalan's *Split* 2016; TMDB dates it 2017 (id 381288, 18,447 votes).
+Four obscure films genuinely titled *Split* do carry 2016 (53, 25, 8 and 3 votes). The resolver
+confined itself to exact-year candidates, found no dominant one, and refused.
+**Decision.** Leave it refused. Do **not** extend vote dominance across a year gap.
+**Why.** The tempting fix — take the overwhelmingly popular candidate even when a year off — is
+exactly the rule that would resolve a `Whiplash` 2013 query to the 2014 feature (16,828 votes against
+the short's 419). Nothing distinguishes the two situations structurally: both are "obscure film with
+the stated year versus famous film one year off". Under D9 and D33 a visible refusal beats a silent
+wrong match.
+**Mitigation.** The refusal reason now names the strong near-year candidate, so the 1.4 hand audit can
+resolve it in one glance. `MatchMethod.MANUAL` exists for exactly this.
+**Status.** Active. Accepted cost: a small, measured, visible dent in resolution rate.
+
+### D50 — `set_config()` rather than `SET LOCAL`
+**Context.** Setting `pg_trgm.similarity_threshold` per transaction failed: `SET` does not accept bind
+parameters.
+**Decision.** `SELECT set_config('pg_trgm.similarity_threshold', :value, true)`.
+**Why.** Keeps the value parameterized instead of interpolating it into SQL.
+**Status.** Active.
+
+### D51 — The `%` operator, not `similarity() >= x`
+**Context.** The local-catalog query needs the GIN trigram index to be used.
+**Decision.** Filter with `normalized_title % :query` and order by `similarity(...) DESC`.
+**Why.** Only the `%` operator is index-backed; a `similarity() >= x` predicate would force a full
+scan, which is precisely what F17/D42 identified as the reason Postgres is here at all.
+**Status.** Active.
