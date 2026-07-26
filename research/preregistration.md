@@ -149,8 +149,36 @@ far more statistical power than the rest (F37), which is a fact about sample siz
 
 ## Outcome
 
-*Blank until after the first fit.*
+*Filled in 2026-07-27, after the first fit. Nothing above this line was edited.*
 
 | Prediction | Outcome | Note |
 |---|---|---|
-| | | |
+| **Part 1 baseline** — could not name an editor, cinematographer, composer or production designer | **stands** | This is the measurement the result is judged against, not filler. The tool surfaced Aarti Bajaj, whom the author could not have named. |
+| Part 1 — director: Akira Kurosawa | testable, 11 films | Above the 12-film threshold only just; not the top director by effect. |
+| Part 1 — writer: Anurag Kashyap | **the confounding case** | 9 films as director and the same 9 as writer, so the two are perfectly inseparable. Named unprompted, before the mechanism that detects it existed. |
+| **2a** — Kurosawa, Kore-eda, Kubrick top the director list | **partly untestable** | Kurosawa 11 films, Kubrick 9, Kore-eda **5** — below the measured detection floor, so that third could not be evaluated. Flagged in advance for exactly this reason. |
+| **2b** — Vaastav, 3 Idiots, Haider, Ghajini, John Wick drive the largest residuals | **partly correct in shape** | Indian cinema does carry large residuals, and the strongest new roles (playback singer, choreography) are Indian-concentrated. Not verified film by film. |
+| **2c** — top below-the-line names will be strangers | **CORRECT** | Aarti Bajaj, Brian Tyler, Sajid Samji, Shilpa Rao. Roger Deakins is the exception, and his name had already been disclosed as contamination. |
+| **2d** — 95% confident crew beats director-only *clearly* (>0.74) | **WRONG** | Crew scored **0.710** against director-only 0.680, and the 95% interval on the difference is [−0.020, +0.100]. Directionally ahead, not clearly, and within noise. On the random split crew is *behind*. |
+| **2e** — 90% confident crew beats the best baseline | **WRONG on the original comparison** | Before the expectation fix, crew 0.730 lost to genre 0.740. After the fix crew leads the context baseline by +0.050, still within noise. Either way, not the confident yes predicted. |
+| **2f** — cinematographer or composer strongest | **CORRECT** | Composer largest by magnitude (Brian Tyler −0.297). Worth noting composer also has the most statistical power, which was disclosed before the prediction. |
+| **2g** — no specific expectation | n/a | |
+
+### What the misses are worth
+
+Two predictions at 95% and 90% confidence both failed. That is the most useful thing in this file: a
+recorded, confident, falsifiable claim that turned out to be wrong, rather than a reaction constructed
+after seeing the output.
+
+The reasoning behind 2d also failed in an instructive way. The expectation was that below-the-line crew
+would clearly beat directors. What the data says is that the two are close, that the apparent gap shrank
+by 40% once a regional bias was removed from the baseline, and that about half of the crew effects that
+do exist are largely attributable to directors anyway.
+
+### Amendment, 2026-07-27
+
+A second pre-registration (`preregistration-roles.md`) predicted that attribution survival would **rise**
+above 42% once casting, costume and sound roles were added, on the reasoning that those roles move
+between directors more freely than editors do. **It fell to 19%.** The reasoning was inverted: Indian
+playback singers and sound designers work within recurring composer-director teams, making them more
+director-concentrated than editors rather than less.
