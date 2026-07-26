@@ -763,3 +763,193 @@ not as "your favourite editor".
 **Why.** The alternative is hiding the strongest, best-evidenced finding because it is unflattering,
 which is the same instinct D65-era honesty rules exist to resist.
 **Status.** Active. Affects the Phase 3 UI copy.
+
+---
+
+## Phase: the go/no-go — 2026-07-26
+
+### D78 — The gate is reported as inconclusive
+**Context.** F49 — crew scores 0.730 against director-only's 0.680 on the temporal split. A paired
+bootstrap puts the difference at +0.050 with a 95% interval of **[−0.020, +0.100]**, favouring crew in
+91% of resamples. Crew also has the best Spearman on both splits. Every other comparison, including
+genre versus director, is likewise within noise.
+**Decision.** Report inconclusive. Not "crew beats the director", because the interval includes zero.
+Not "the thesis is false", because direction and rank correlation both favour crew.
+**Why.** With 527 test films at k=100, five films is about one standard error. Claiming either headline
+would be choosing a story over the evidence, and the whole apparatus — pre-registration, controls,
+permutation null — exists to make that choice unavailable.
+**Consequence.** Resolving a 0.05 difference needs roughly four times the test set, about 5,000 rated
+films. One account cannot reach that; 15–30 can. **Stage 2 is now the only route to answering the
+question**, not merely the route to generalising the answer.
+**Status.** Active.
+
+### D79 — Report differences with intervals, never as point estimates
+**Context.** The first gate run printed 0.730 against 0.680 with no uncertainty. That reads as a clear
+win and is not one.
+**Decision.** Every predictor comparison goes through a paired bootstrap: both scored on the same
+resampled test set, so the interval is on the difference itself.
+**Why.** This is the single easiest place in the project to overclaim, and the margin between rungs is
+smaller than the sampling noise on the metric.
+**Status.** Active.
+
+### D80 — Track 2 is kept for attribution, not prediction
+**Context.** F50 — ridge scores 0.690 against Track 1's 0.730 and ties on the random split. Roughly
+2,000 features against 770 training films.
+**Decision.** Track 1 remains the model the product surfaces. Track 2's job is the attribution
+comparison.
+**Why.** `Ariadne.MD` §4 expected ridge to be the stronger of the two, on the reasoning that joint
+fitting splits collaborator credit properly. It does — that is exactly what makes the attribution
+analysis work — but the advantage does not translate into predictive accuracy at this sample size.
+**Status.** Active. Reverses an expectation in §4.
+
+### D81 — Attribution is reported per person, not summarised
+**Context.** F51 — 13 of 31 attributable effects survive with directors in the model. Aarti Bajaj's
+editor effect keeps only a third of its size; Roger Deakins keeps half and survives.
+**Decision.** Show every person's effect before and after, with the retained share, rather than a
+headline count.
+**Why.** "Half of crew effects are really director effects" is true and useless. "Your top editor cuts
+one director's films, so most of that signal is the director; your top cinematographer works across
+many, so his is his own" is the actual finding, and it can only be said per person.
+**Status.** Active. This is D9's structural inseparability flag made quantitative.
+
+### D82 — A ratio needs a floor before it is reported
+**Context.** F52 — retained share divided by the Track 1 effect, so near-zero effects produced 14.84,
+−50.24 and 11.12, and were labelled "survives".
+**Decision.** Effects below 0.05 report "no effect to attribute" and no ratio.
+**Why.** Same class of error as D71: a derived quantity that is meaningless in a regime the code did not
+exclude. Worth stating as a habit — check the denominator before publishing the quotient.
+**Status.** Active.
+
+---
+
+## Phase: the correctness fixes — 2026-07-27
+
+### D83 — The rich expectation model, and reporting before-and-after
+**Context.** The simple expectation left a **+0.744-star mean residual on Japanese films**, larger than
+any crew effect reported. Crew working predominantly in one national cinema were inheriting the model's
+failure to predict that cinema.
+**Decision.** Add vote_count, country, decade and genre to the expectation. Report every headline number
+before *and* after, committed to in advance.
+**Why the commitment mattered.** The fix made the findings **weaker**: effects shrank 18–75%, the crew
+advantage over the director fell from +0.050 (P=0.91) to +0.030 (P=0.62) and reversed on the random
+split, attribution survival fell from 42% to 19%, and Roger Deakins stopped surviving. Reporting only
+the "after" would have looked like a discovery; only the "before" would have been wrong.
+**Status.** Active. The rich model is the default; the simple one is kept selectable so the comparison
+stays reproducible.
+
+### D84 — A `context` baseline rung, so the crew model is not credited for a better baseline
+**Context.** Moving the crew model onto the rich expectation would show up as a crew improvement if the
+baselines stayed on the simple one.
+**Decision.** Add a rung that is the rich expectation alone.
+**Why.** Otherwise the ladder measures the expectation model, not the crew. Note that `genre_only` is
+now degenerate — it scores identically to `context`, because genre is already in the expectation.
+**Status.** Active.
+
+### D85 — The shuffle-test max-ratio criterion is retired as a pass condition
+**Context.** After expanding roles the max-vs-max ratio failed at 0.561. Two unrelated legitimate
+changes pushed it: the real maximum fell (bias removed) while the shuffled maximum rose (34 → 116 people
+tested, and the maximum of a null rises with the number of draws).
+**Decision.** The count ratio is the pass condition. The max ratio is reported as information.
+**Being explicit:** this is changing a test after it failed, which deserves stating rather than burying.
+The justification is that the count ratio *improved* to 0.000 — ten real effects above threshold, zero
+shuffled — so the collapse got stronger, and the failing criterion is confounded by a variable that
+changed for unrelated reasons. The rigorous per-person test remains the permutation null, which is
+correct by construction across any role scope.
+**Status.** Active, with the full reasoning in the code beside the constant.
+
+### D86 — Report the multiple-comparisons threshold alongside every p-value
+**Context.** 7 of 11 roles clear their own permutation null at p<0.05, which expects 0.55 false
+positives. A first run at 120 permutations could not produce a p below 0.008, so the corrected threshold
+was untestable.
+**Decision.** 400 permutations, and every claim stated against the Bonferroni threshold of 0.0045.
+**Result.** **Exactly one finding survives: Aarti Bajaj as editor, p = 0.002.** Playback singer is
+borderline at 0.005; everything else fails.
+**Status.** Active.
+
+### D87 — Pre-registration prediction #2 was wrong, recorded rather than quietly dropped
+**Predicted.** Attribution survival would rise above 42%, because casting, costume and sound roles move
+between directors more freely than editors do.
+**Observed.** It fell to 19%.
+**Why the reasoning was backwards.** Indian playback singers and sound designers are *more*
+director-concentrated than editors in this library — they work within recurring composer-director teams.
+Shilpa Rao, Jonita Gandhi, Vishal Dadlani, Arijit Singh and Parikshit Lalwani are all absorbed.
+**Status.** Recorded. Predictions #1 and #4 were correct; #2 was wrong; the writeup reports all three.
+
+### D88 — `in_diary` is a feature only when the target carries a rewatch bonus
+**Context.** F60 — as an unconditional feature it is 16% of train and 69% of test on the temporal split,
+which makes it a near-indicator of split membership, and it moved the headline gate score from 0.710 to
+0.690 without explanation.
+**Decision.** Include it only when the target is `preference`, where it is structurally required.
+**Why.** A feature whose distribution differs that sharply between train and test is not describing the
+film, it is describing which side of the cut the film fell on.
+**Status.** Active. Found by noticing an unexplained drift in a number that should not have moved.
+
+### D89 — Keep `mean` for co-credited people, having measured the alternatives
+**Context.** F62 — 49% of films credit more than one writer, so averaging might dilute a strong
+collaborator. `max` and `weighted` were implemented and tested.
+**Decision.** Keep `mean`. Both alternatives are within noise on both splits.
+**Why.** The alternatives stay in the code and under test, so the claim is "measured, no difference"
+rather than "assumed fine". Reverses nothing, but retires an open worry.
+**Status.** Active.
+
+### D90 — The rewatch target is recorded, not adopted
+**Context.** F63 — `target=preference` scores −0.030 on the temporal split and **+0.080** on the random
+one, CI [+0.000, +0.140]. The temporal split cannot judge it: diary coverage is 16% of train against
+69% of test.
+**Decision.** Not the default. Recorded as the most promising unexploited signal.
+**Why.** One split, borderline interval, and the split that can evaluate it fairly is the one that leaks
+era and collaborators. Adopting on that basis would be selecting the evidence that agreed.
+**Worth revisiting** with users whose diaries cover most of their library; 38% coverage is this
+library's limit rather than the idea's.
+**Status.** Active.
+
+---
+
+## Phase: recommendations — 2026-07-27
+
+### D91 — Recommendations come from crew adjacency, not a broader candidate pool
+**Decision.** Candidates are films credited to people already in the user's library, found by fetching
+the filmographies of everyone with 3+ films in a modelled role — 1,415 people, one request each.
+**Why.** It needs no new data source, and it is the more interesting object anyway: a recommendation is
+reachable only through a person the user has already watched, which is what makes the reason sayable.
+**Cost.** 457s, 12,623 new films, 41,403 credits.
+**Status.** Active.
+
+### D92 — Traversal is not limited to estimable people
+**Decision.** Filmographies are fetched for people with 3+ films, not the 138 with 12+.
+**Why.** D65 in practice. A cinematographer with three films is far too thin to publish an effect for
+but perfectly good to walk through, and restricting to estimable people would reach almost nothing.
+**Status.** Active.
+
+### D93 — Rank by crew adjustment, not predicted rating
+**Context.** F65 — expectation spans 1–5 stars against crew effects of ±0.3, so ranking by score sorts
+by acclaim. The first version's top pick was attributed to a person whose effect was −0.151.
+**Decision.** Rank by score minus expectation. Show predicted rating alongside.
+**Why.** Otherwise the recommender is the popularity baseline with extra steps.
+**Status.** Active.
+
+### D94 — At most two recommendations per person
+**Context.** F66 — unconstrained, one person took all ten slots, and because he directs his own films
+every recommendation was a director recommendation. Non-obviousness 0%.
+**Decision.** Cap at 2 per reason-person.
+**Why.** Both a better list and a measurable one.
+**Status.** Active.
+
+### D95 — Unknown is not unfamiliar
+**Context.** F64 — candidates carry no director credit, so "director never rated" was true by
+construction and non-obviousness read 100%.
+**Decision.** `None` for unknown, excluded from the metric; directors resolved explicitly for the
+shortlist.
+**Why.** Third instance of the same class of bug (D71, D82): a derived quantity computed in a regime the
+code did not exclude. Absence of knowledge is not evidence.
+**Status.** Active.
+
+### D96 — The writer-director confound in recommendations is recorded, not fixed
+**Context.** F67 — most top reasons are writers, and Eggers, Jackson, Chazelle and Priyadarshan all
+direct their own films. "Because of X (writer)" on a film X also directed is a director recommendation
+in below-the-line clothing.
+**Decision.** Leave it, flagged in the output and counted correctly by the metric, but do not claim the
+framing is honest yet.
+**Why.** Fixing it properly means resolving each candidate's director *before* ranking rather than after,
+which reorders the pipeline. Worth doing; not worth doing hastily at the end of a phase.
+**Status.** Open. The clearest remaining flaw in the recommender.
