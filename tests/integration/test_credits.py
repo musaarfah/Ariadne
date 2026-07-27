@@ -4,12 +4,14 @@ from typing import Any
 
 import pytest
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ariadne.core.catalog.credits import (
     films_with_credits,
     ingest_credits_for_upload,
     store_credits,
+    stored_payload_with_credits,
 )
 from ariadne.core.catalog.roles import CINEMATOGRAPHER, COMPOSER, DIRECTOR, EDITOR
 from ariadne.core.catalog.store import upsert_film
@@ -74,13 +76,31 @@ def test_detail_payload_fills_in_country(session: Session):
     assert session.get(Film, 238).country == "US"
 
 
-def test_films_with_credits_reports_what_can_be_skipped(session: Session):
+def test_films_with_credits_means_the_payload_is_held_not_that_a_row_exists(session: Session):
+    """The old predicate was "has at least one Credit row", which candidate films satisfy with one
+    row out of several hundred (D113). It is now "the full detail payload is stored"."""
     payload = godfather_payload()
     upsert_film(session, payload)
-    assert films_with_credits(session) == set()
 
-    store_credits(session, 238, payload)
+    # The payload carries credits, so no API call is needed even before any row is written.
     assert films_with_credits(session) == {238}
+
+
+def test_a_candidate_film_with_a_stray_credit_row_is_not_treated_as_complete(session: Session):
+    """`ingest_filmographies` creates films from person-credit entries: slim payload, one Credit row
+    per discovered credit. That must not read as "credits already fetched"."""
+    upsert_film(session, {"id": 999, "title": "Candidate", "release_date": "2001-01-01"})
+    session.execute(
+        insert(Person).values({"tmdb_id": 42, "name": "Someone"}).on_conflict_do_nothing()
+    )
+    session.execute(
+        insert(Credit).values(
+            {"film_id": 999, "person_id": 42, "department": "Editing", "job": "Editor"}
+        )
+    )
+
+    assert 999 not in films_with_credits(session)
+    assert stored_payload_with_credits(session, 999) is None
 
 
 # --- coverage --------------------------------------------------------------------------

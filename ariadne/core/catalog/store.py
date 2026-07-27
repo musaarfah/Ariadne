@@ -58,8 +58,17 @@ def upsert_film(session: Session, payload: dict[str, Any]) -> Film:
     statement = insert(Film).values(**values)
     updates: dict[str, Any] = {
         column: statement.excluded[column]
-        for column in ("title", "original_title", "normalized_title", "raw")
+        for column in ("title", "original_title", "normalized_title")
     }
+    # `raw` is the only field a later payload can silently destroy rather than merely fail to
+    # improve: the COALESCE below protects scalars, but a slim search result is a perfectly
+    # non-null JSON object that would replace a full detail response and take its credits with it.
+    # Keep the stored payload unless the incoming one is at least as complete.
+    updates["raw"] = text(
+        "CASE WHEN jsonb_exists(EXCLUDED.raw, 'credits') "
+        "OR NOT jsonb_exists(films.raw, 'credits') "
+        "THEN EXCLUDED.raw ELSE films.raw END"
+    )
     # COALESCE so a sparse search payload cannot null out fields a detail fetch supplied.
     for column in ("year", "vote_average", "vote_count", "country"):
         updates[column] = text(f"COALESCE(EXCLUDED.{column}, films.{column})")

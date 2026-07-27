@@ -9,6 +9,11 @@ RANDOM_SEED = 20260726
 # 2023 backfill burst, rated from memory rather than logged on watch. The live-logged half
 # is more generous (mean 3.59 vs 3.35) with nearly double the 5.0 rate. Splitting here
 # separates the two regimes; see docs/DATA_FINDINGS.MD F3.
+#
+# This date is therefore a fact about ONE account, not about Letterboxd. Any other library has its
+# own backfill boundary, and every command that splits accepts --cut so it can be given one. Choose
+# it from the log-date distribution BEFORE looking at any model output: a cut chosen after seeing
+# the scores is a cut chosen to flatter them.
 TEMPORAL_SPLIT_DATE = date(2024, 1, 1)
 
 # Ratings are half-stars from 0.5 to 5.0. There is no 0.

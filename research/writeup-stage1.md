@@ -20,14 +20,27 @@ question actually needs.
    was largely "favourite director, seen through his editor."
 3. **Whether crew beats directors is unresolved, and one library cannot resolve it.** Crew leads
    director-only by +0.030 on the honest split, 95% CI **[−0.020, +0.100]**, and *trails* by 0.020 on
-   the other. Inconclusive, not positive and not negative.
-4. **A half-star crew preference is undetectable at this sample size** — at any film count this library
+   the other. Inconclusive, not positive and not negative. **Four explanations I offered for that were
+   each measured and each rejected** — including the sharpest number here: a gradient booster given no
+   crew or cast features at all predicts as well as the crew model, and *worse* once you give it the
+   crew features.
+4. **Asked instead how much of a rating each kind of information explains, crew is the only one that
+   clears zero** — and the answer is dominated by something else entirely. What the rest of the world
+   thought of a film explains **28.3%** of the variation in my ratings on its own. Era, country, genre,
+   director, cast and crew together add **3.3 points** on top of that. Caveat attached below: this
+   metric was not pre-registered, and I chose it after the gate metric came out null.
+5. **A half-star crew preference is undetectable at this sample size** — at any film count this library
    contains. That number, as far as I can tell, has not been published before.
-5. **My own strongest signal is a dislike**, not a favourite: every one of my five largest composer
+6. **My own strongest signal is a dislike**, not a favourite: every one of my five largest composer
    effects is a Hollywood blockbuster scorer, all negative.
 
 The honest headline is not "crew beats directors." It is: **here is exactly how much data it takes to
 know your favourite editor, and 1,345 films is not enough.**
+
+The uncomfortable one, which I did not expect to be writing: measured this way, my library looks mostly
+like a well-calibrated version of general consensus with a thin personal layer on top. Roughly
+three-quarters of the variation in my ratings is not explained by anything I can compute from film
+metadata at all.
 
 ---
 
@@ -64,6 +77,7 @@ Plain tools, deliberately. Two flavours of linear regression and one hand-writte
 | Track 2 | Ridge over a sparse 1,297 × ~2,000 film-by-person matrix, fitting everyone jointly |
 | Significance | Permutation null over the **maximum** effect per shuffle, 400 permutations |
 | Comparison | Paired bootstrap, 2,000 resamples, on the difference between predictors |
+| Decomposition | The same paired bootstrap, 1,000 resamples, on the difference in variance explained when one kind of information is added to a consensus base. Each block is centred separately, as the split specification requires — without it a model is charged for a mean shift between regimes that it could not have known about |
 
 No neural network. With ~1,300 rows and almost entirely sparse binary features, a network would have
 more parameters than films. The binding constraint is information, not model capacity: at 12 films per
@@ -109,6 +123,28 @@ resolve an improvement.
 wrong instrument. Twenty accounts each producing this same weak directional result would settle it by
 sign test — **15 of 20 favouring crew gives p ≈ 0.02.** Twenty individually inconclusive results are
 collectively conclusive.
+
+### Four explanations I offered for that, and measured
+
+Each of these was my own account of why crew prediction was weak. All four were tested and all four were
+rejected, in this order:
+
+| # | explanation | verdict |
+|---|---|---|
+| 1 | too few roles — five is not enough | rejected: twelve roles score no better than five |
+| 2 | cast is missing, and actors recur far more than editors | rejected: actor effects are the same size, and adding them *lowered* the gate 0.710 → 0.680 |
+| 3 | the arithmetic dilutes — averaging across roles pulls every adjustment toward zero | rejected: twelve combination strategies span 0.660–0.710 and the two splits disagree about which is best |
+| 4 | the model is too rigid — a linear model cannot express the pattern | rejected: gradient boosting is within noise on every gate comparison |
+
+The sharpest number in this project sits inside that last null. **A gradient booster given no crew or cast
+features at all scores 0.720, against 0.710 for the crew model — and adding the crew features drops it to
+0.650.** A flexible model handed columns describing who made the film declines to use them, and is worse
+for having been offered them.
+
+That is a stronger statement than "the effects are small." It says that for this library, who worked on a
+film carries almost no *predictive* information about how I will rate it, measured four independent ways.
+Which is what makes Result 4 worth stating carefully rather than triumphantly: the one place who-made-it
+shows up as more than nothing is a +0.040 effect on a metric I chose after the fact.
 
 ---
 
@@ -190,6 +226,92 @@ best-evidenced finding for being unflattering.
 
 ---
 
+## Result 4: what actually explains a rating
+
+The gate metric asks whether a model would recommend well. A different and more basic question is how
+much of a rating each kind of information accounts for at all. So: six kinds of information, each added
+**on its own** to the same starting point — what the rest of the world thought of the film, meaning
+TMDB's average and its vote count — with a 1,000-resample paired bootstrap on every difference.
+
+Added one at a time rather than stacked, because stacking makes each number depend on the order the
+layers happen to be listed in, and that order is a design choice, not a result.
+
+**Temporal split, 527 held-out films. Consensus alone explains 28.3% of the variation.**
+
+| what it knows | explains | 95% CI |
+|---|---|---|
+| when it was made | +0.020 | [+0.004, +0.037] |
+| where it comes from | −0.022 | [−0.042, −0.002] |
+| what kind of film it is | +0.031 | [+0.007, +0.056] |
+| who directed it | +0.013 | [−0.031, +0.055] |
+| who acted in it | +0.022 | [−0.012, +0.058] |
+| **who else made it (below-the-line crew)** | **+0.040** | **[+0.003, +0.077]** |
+| all six together | +0.033 | [−0.003, +0.071] |
+
+Four things in that table.
+
+**Consensus is the story.** 28.3% from what everyone else thought, against at most 4 points from anything
+else. The single most predictive fact about how I will rate a film is how the rest of the world rated it.
+That is not the finding a taste-analysis project hopes for, and it is the finding.
+
+**Neither the director nor the cast clears zero, and crew does.** Era and genre also clear zero, at
++0.020 and +0.031, so crew is not the only surviving layer — it is the only *person* layer that survives,
+which is the Stage 1 thesis arriving through a different door after the gate metric refused to settle it.
+
+**All six together (+0.033) is no better than crew alone (+0.040).** Adding the director, the cast and
+every context feature to the crew model buys nothing measurable.
+
+**The layers overlap heavily.** Measured one at a time they sum to +0.104; delivered together they are
++0.033. So **68% of the marginal contributions are the same information counted twice** — a director
+carries their era, a genre carries its decade, a cast carries its director. This is why these are bars
+against a common base and never segments of a whole. "Your taste is 30% director" would overstate the
+total threefold.
+
+### The disclosure that belongs with this result
+
+**This metric was not pre-registered, and I selected it after the gate metric came out null.** No gate
+interval for any layer clears zero on either split. Had I reported only the pre-registered metric, Result
+4 would read "nothing is distinguishable from noise."
+
+That is metric-shopping unless the reason is measured and stated, so here is the reason. Across all eight
+subsets of the context features, variance explained rises with features while the gate wanders with no
+relationship to it:
+
+| features | gate | explained |
+|---|---|---|
+| vote_average only | 0.700 | +0.179 |
+| consensus (+ vote_count) | 0.680 | +0.216 |
+| + genre | 0.690 | +0.240 |
+| + decade + genre | **0.640** | **+0.250** |
+| + all three | 0.660 | +0.246 |
+
+The best-explaining subset is the second-worst ranker. At 527 test films each film moves the gate by
+0.010, and six small differences all sit inside that noise band — the gate was chosen to resolve one large
+difference for the go/no-go, and it cannot resolve six small ones.
+
+I still would not call Result 4 a confirmation of the thesis. It is a +0.040 effect with a lower bound of
++0.003, in one library, on a metric chosen after seeing that the pre-registered one was silent. Treat it
+as the most promising thing to pre-register for Stage 2, not as a settled answer.
+
+### The same analysis on the leaky split, as a warning
+
+| layer | temporal | random | ratio |
+|---|---|---|---|
+| who directed it | +0.022 | **+0.094** | 4.3x |
+| who acted in it | +0.029 | +0.071 | 2.4x |
+| who else made it | +0.040 | +0.088 | 2.2x |
+| when it was made | +0.014 | +0.031 | 2.2x |
+
+Every layer involving a person more than doubles. The director layer quadruples and moves from an interval
+containing zero to **[+0.049, +0.136]** — a confident director effect, on the same data, split the
+convenient way. Five of six layers "clear zero" on the random split; one does on the temporal split.
+
+This is the clearest argument I have for why the temporal split is the headline everywhere in this
+project. The same instrument, given data split the easy way, reports a result that does not survive being
+asked to predict forward.
+
+---
+
 ## Pre-registration, including what I got wrong
 
 Predictions were committed to git **before any crew effect was computed**.
@@ -231,11 +353,29 @@ Five that would have changed conclusions:
 5. **A feature I added leaked split membership.** Diary coverage is 16% of train and 69% of test, so it
    was close to a "this row is in the test set" indicator, and it moved the headline gate by 0.020.
 
+And one that changed no published number but says something about how defects survive. A baseline rung
+called `genre_only` was, I eventually measured, **exactly identical to its neighbour** — 0.0000 maximum
+difference across all 527 held-out films. Fitting genre effects on residuals from a model that already
+used genre leaves nothing for the effects to explain. I had noticed this three days earlier and written it
+down in a design note, accurately, as a passing remark — and then left the rung in the ladder. A
+degeneracy documented and not fixed is a bug with paperwork.
+
+Five of the six were caught by a check that exists to fail. The sixth was caught by finally computing a
+number I had already described in prose.
+
 ---
 
 ## Limitations
 
 - **n = 1.** Nothing here generalises to anyone else. It is one person's taste, measured carefully.
+- **About three-quarters of the variation in my ratings is unexplained** by anything computable from film
+  metadata. Consensus reaches 28.3% and everything else adds 3.3 points. That residual is not evidence of
+  a deeper unmeasured taste, and it is not noise either — it is simply outside what these features can see.
+- **The "who else made it" bar bundles twelve roles while "who directed it" is one**, so the two are not
+  comparable person-for-person. Crew gets twelve chances to find something. That asymmetry *is* the thesis
+  comparison, deliberately, but it is not a fair fight between two individuals.
+- **Result 4's metric was chosen after seeing the pre-registered one come out null.** The reason is
+  measured and stated, but the ordering is the ordering.
 - **Claims are scoped to post-2000 cinema.** 83% of the library postdates 2000; 5.9% predates 1980.
 - **24% Indian cinema**, which shapes several findings — production design coverage is 49% for those
   films against 92% for US ones.
@@ -272,9 +412,10 @@ either way.
 ## Reproducing this
 
 Everything is in the repository. `research/` holds the pre-registrations, this writeup, and the
-hand-audit record; `docs/DATA_FINDINGS.MD` holds 68 numbered findings, each paired with the decision it
-forced; `research/DECISIONS.md` holds 96 decisions in chronological, append-only order, including every
+hand-audit record; `docs/DATA_FINDINGS.MD` holds 79 numbered findings, each paired with the decision it
+forced; `research/DECISIONS.md` holds 111 decisions in chronological, append-only order, including every
 reversal with its original reasoning intact.
 
 The commit history is the honest version: it contains the run where the headline result got *worse* after
-a bias was fixed.
+a bias was fixed, and the four separate hypotheses I offered for why crew prediction was weak, each
+measured and each rejected.

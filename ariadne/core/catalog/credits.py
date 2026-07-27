@@ -13,13 +13,13 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ariadne.core.catalog.store import upsert_film
 from ariadne.core.catalog.tmdb import TmdbClient, TmdbError, TmdbNotFound
-from ariadne.db.models import Credit, Person, Rating, Resolution
+from ariadne.db.models import Credit, Film, Person, Rating, Resolution
 
 
 @dataclass
@@ -131,8 +131,45 @@ def resolved_film_ids(session: Session, upload_id: object) -> list[int]:
     ]
 
 
+def stored_payload_with_credits(session: Session, tmdb_id: int) -> dict[str, Any] | None:
+    """The film's stored detail payload, if it holds a credits block. Otherwise None."""
+    film = session.get(Film, tmdb_id)
+    if film is None or not film.raw or "credits" not in film.raw:
+        return None
+    payload: dict[str, Any] = film.raw
+    return payload
+
+
+def store_from_payload(
+    session: Session, tmdb_id: int, payload: dict[str, Any], stats: CreditsStats
+) -> None:
+    """Write credits from a payload already in the database. No API call.
+
+    Storing rather than skipping is the point. The previous version skipped any film that had at
+    least one Credit row, and `ingest_filmographies` creates candidate films from person-credit
+    entries with one Credit row each — so 200 of a second library's 914 films counted as done while
+    holding six director credits between them. The decomposition would have read that as "who
+    directed it explains nothing" (D113).
+
+    Because `store_credits` is an idempotent upsert, re-storing from a payload we already hold is
+    both free and self-healing: it also fixes the D98 class, where a payload sat in `films.raw` with
+    its cast never written.
+    """
+    credits_written, people_written = store_credits(session, tmdb_id, payload)
+    credits_written += store_cast(session, tmdb_id, payload)
+    stats.credits_stored += credits_written
+    stats.people_stored += people_written
+
+
 def films_with_credits(session: Session) -> set[int]:
-    return set(session.scalars(select(Credit.film_id).distinct()))
+    """Films whose full credits payload is stored. Informational; the ingest loop does not use it.
+
+    Not "films with at least one credit row" — see `store_from_payload` for why that predicate was
+    wrong.
+    """
+    return set(
+        session.scalars(select(Film.tmdb_id).where(func.jsonb_exists(Film.raw, text("'credits'"))))
+    )
 
 
 def ingest_credits_for_upload(
@@ -153,11 +190,11 @@ def ingest_credits_for_upload(
     if limit is not None:
         film_ids = film_ids[:limit]
 
-    already = set() if refresh else films_with_credits(session)
-
     for index, tmdb_id in enumerate(film_ids, start=1):
         stats.films += 1
-        if tmdb_id in already:
+        held = None if refresh else stored_payload_with_credits(session, tmdb_id)
+        if held is not None:
+            store_from_payload(session, tmdb_id, held, stats)
             stats.skipped_cached += 1
         else:
             try:

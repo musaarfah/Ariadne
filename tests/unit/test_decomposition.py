@@ -19,6 +19,7 @@ from ariadne.core.evaluation.metrics import (
     compare,
     precision_at_k,
     variance_explained,
+    variance_explained_centred,
 )
 from ariadne.core.evaluation.splits import temporal_split
 from ariadne.core.recommend.decomposition import Layer, decompose_split
@@ -86,6 +87,42 @@ def test_variance_explained_is_zero_when_every_rating_is_identical():
 
 def test_variance_explained_needs_at_least_two_films():
     assert variance_explained(np.array([3.0]), np.array([4.0])) == 0.0
+
+
+# --- centring, which the temporal split requires -------------------------------------
+
+
+def test_centring_removes_a_mean_offset_the_model_could_not_have_known():
+    """A model fitted on a block averaging 3.40 predicts 3.40 for a block averaging 3.85.
+
+    Whether that 0.45 offset alone pushes variance explained below zero depends on the spread it is
+    measured against, which is why the second library hit it and the first did not: the post-cut
+    block there is both higher and narrower, so the offset is large relative to the variation left
+    to explain. Reproduced here with a deliberately narrow block — the ranking is perfect and the
+    uncentred score is still negative.
+    """
+    actual = np.array([3.5, 4.0, 4.5] * 40, dtype=float)
+    shifted = actual - 0.45
+
+    assert actual.std(ddof=1) < 0.45
+    assert variance_explained(shifted, actual) < 0.0
+    assert variance_explained_centred(shifted, actual) == pytest.approx(1.0)
+
+
+def test_centring_does_not_rescue_a_model_that_ranks_badly():
+    """It removes an offset, not an error. A reversed ranking stays negative."""
+    actual = np.array([1.0, 2.0, 4.0, 5.0] * 20, dtype=float)
+
+    assert variance_explained_centred(-actual, actual) < 0.0
+
+
+def test_centring_leaves_an_already_centred_prediction_alone():
+    actual = np.array([1.0, 2.0, 4.0, 5.0] * 20, dtype=float)
+    predicted = actual * 0.5 + actual.mean() * 0.5
+
+    assert variance_explained_centred(predicted, actual) == pytest.approx(
+        variance_explained(predicted, actual)
+    )
 
 
 # --- the generalised paired bootstrap --------------------------------------------------

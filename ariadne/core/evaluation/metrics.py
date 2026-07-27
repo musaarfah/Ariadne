@@ -183,6 +183,25 @@ def variance_explained(predicted: np.ndarray, actual: np.ndarray) -> float:
     return 1.0 - float(np.sum((actual - predicted) ** 2)) / total
 
 
+def variance_explained_centred(predicted: np.ndarray, actual: np.ndarray) -> float:
+    """Variance explained after removing the per-block mean offset.
+
+    The temporal split is specified to centre each block separately, because the two blocks are two
+    rating regimes rather than two samples of one. Uncentred, this metric charges a model for a
+    shift it cannot know about: on the second library the post-cut block runs 0.450 stars above the
+    training block *and* narrower (sd 0.928 against 1.097), which drove consensus to an apparent
+    -0.216 — worse than predicting a constant — where centred it is -0.032 (F80/D114).
+
+    This measures explanatory power net of a mean offset, which is the decomposition's question. It
+    is NOT forecasting skill: the offset is removed using the test block's own mean. Ranking metrics
+    are reported beside it precisely because they make no such adjustment.
+    """
+    if len(actual) < 2:
+        return 0.0
+    aligned = predicted - predicted.mean() + actual.mean()
+    return variance_explained(aligned, actual)
+
+
 def precision_grid(predicted: np.ndarray, actual: np.ndarray) -> dict[float, dict[int, float]]:
     """P@k across thresholds and k, so the chosen configuration can be checked."""
     return {

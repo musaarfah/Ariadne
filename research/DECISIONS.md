@@ -1159,3 +1159,68 @@ plainly that a layer can move one and not the other. This does not change the pr
 else: the go/no-go, the ladder and the writeup stay on the gate.
 **Status.** Active. Narrow reversal of D11, scoped to the decomposition only.
 
+### D112 — The second library's temporal cut is 2025-01-01, chosen from log volume before any model ran
+**Context.** A friend's export arrived: 988 ratings, 495 diary entries, 191 likes. The temporal split date
+was a hardcoded constant justified by *this* account's history — a 731-rating backfill burst in 2023-11 —
+so applying 2024-01-01 to a second library would split it at an arbitrary point and then call the result
+the honest split.
+**Decision.** `--cut` is now threaded through `evaluate` and `decompose`; the default is unchanged. For
+this library the cut is **2025-01-01**.
+**How it was chosen.** From the distribution of rating log dates only, and written down before any model
+was fitted on this data. His backfill is 2024-09 (169) and 2024-12 (268): 437 of his 517 ratings in 2024
+land in two months. The last burst month is 2024-12, so the first month after it begins the live-logged
+regime. This mirrors the rule used for the reference account rather than inventing a new one — burst month
+2023-11 there, cut 2024-01-01.
+**The resulting split is 522 train / 466 test**, more balanced than the reference account's 770/527.
+**Why the order matters.** A cut chosen after seeing the scores is a cut chosen to flatter them. The
+writeup already carries one post-hoc metric-selection disclosure (D111); a second one on the split itself
+would make the comparison between the two libraries worthless.
+**Status.** Active.
+
+### D113 — "Has credits" means the payload is stored, not that a credit row exists
+**What happened.** `ingest_credits_for_upload` skipped any film with at least one Credit row.
+`ingest_filmographies` creates candidate films from person-credit entries and writes one Credit row each,
+against a slim payload with no country. 200 of the second library's 914 films were already present as
+candidates, so they were skipped and never detail-fetched: director coverage read 77.6%, and the 205
+no-country films held six director credits between them.
+**Decision.** A film needs re-fetching unless `films.raw` holds a `credits` block. When the payload is
+already held, store from it rather than skipping — `store_credits` is an idempotent upsert, so this costs
+no API call, is self-healing, and also closes the D98 class where a payload sat in `raw` with its cast
+never written.
+**Second half of the fix.** `upsert_film` overwrote `raw` unconditionally while COALESCE-protecting the
+scalar columns. A slim search payload is a perfectly non-null JSON object, so it could replace a detail
+response and take the credits with it. `raw` is now only replaced when the incoming payload is at least as
+complete. Latent rather than triggered — no rated film has lost a payload — but it is the same class.
+**Result.** Director coverage 77.6% to 99.5%; credits 9,313 to 96,617; median crew per film 20 to 61.
+**Why this matters beyond the bug.** It could not have been found on the reference account, whose films
+were resolved before the candidate catalog existed. Recruitment is a correctness measure, not only a
+statistical one.
+**Status.** Active. F80.
+
+### D114 — The decomposition centres each block, per the split specification
+**Context.** The temporal split is specified to centre each block separately, because the two blocks are
+two rating regimes rather than two samples of one. The decomposition computed variance explained on raw
+residuals, so it charged every model for a mean offset it could not have known.
+**Measured.** The second library's post-cut block is +0.450 stars above its training block and narrower,
+sd 0.928 against 1.097. Uncentred, consensus scored -0.216 — worse than predicting a constant — for a
+model whose rank correlation on that block is +0.515.
+**Decision.** `variance_explained_centred` removes the per-block mean offset, and the decomposition uses
+it everywhere. Raw `variance_explained` is kept and still tested.
+**Consequence for published numbers.** Consensus explains **28.3%** of the reference account's variation,
+not the 21.6% the writeup's Result 4 reported. The error understated the headline. The layer ordering is
+unchanged and crew remains the only interval clearing zero, +0.040 [+0.003, +0.077].
+**Honesty note.** This is explanatory power net of an offset, not forecasting skill: the offset is removed
+using the test block's own mean. That is exactly why ranking metrics are reported beside it.
+**Status.** Active. F81.
+
+### D115 — The second library is not added to the writeup as a result yet
+**Context.** Two libraries now exist. On the random split they agree closely and both put below-the-line
+crew as the largest person layer; on the temporal split they contradict each other completely.
+**Decision.** Correct the writeup's wrong numbers (D114) but do not present the second library as a
+finding. Report it in `DATA_FINDINGS.MD` and decide the framing deliberately.
+**Why.** n=2 is not n=1 twice; it is the point at which the temptation to generalise appears without the
+sample size that would license it. The agreement on the random split is the leaky one, and picking the
+split that agrees would be the same error as picking the metric that agrees (D111). The honest use of this
+library is as a pre-registration target for Stage 2, not as corroboration.
+**Status.** Active.
+

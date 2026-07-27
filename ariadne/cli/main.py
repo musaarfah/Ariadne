@@ -1,10 +1,14 @@
 import time
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import typer
 from redis import Redis
 from sqlalchemy import inspect, select, text
 
+from ariadne.constants import TEMPORAL_SPLIT_DATE
 from ariadne.core.catalog.credits import CreditsStats, ingest_credits_for_upload
 from ariadne.core.catalog.fixtures import FIXTURE_DIR, capture_all
 from ariadne.core.catalog.pipeline import ResolveStats, resolve_upload
@@ -505,6 +509,11 @@ def evaluate_command(
     k: int = typer.Option(20, "--k", help="k for Precision@k"),
     save: bool = typer.Option(True, "--save/--no-save", help="Persist the run to analysis_runs"),
     grid: bool = typer.Option(False, "--grid", help="Print the full P@k grid for each predictor"),
+    cut: datetime = typer.Option(
+        TEMPORAL_SPLIT_DATE.isoformat(),
+        formats=["%Y-%m-%d"],
+        help="Temporal split date. Must match whatever `decompose` is given.",
+    ),
 ) -> None:
     """Score the baseline ladder on both splits."""
     with session_scope() as session:
@@ -518,7 +527,7 @@ def evaluate_command(
             typer.echo("no resolved rated films; run `ariadne resolve` first")
             raise typer.Exit(code=1)
 
-        results = evaluate(films, k=k)
+        results = evaluate(films, k=k, cut=cut.date())
         payload = run_payload(results, films=len(films))
 
         if save:
@@ -573,7 +582,7 @@ def evaluate_command(
         from ariadne.core.evaluation.baselines import full_ladder
         from ariadne.core.evaluation.splits import temporal_split
 
-        grid_split = temporal_split(films)
+        grid_split = temporal_split(films, cut.date())
         actual = np.array([f.rating for f in grid_split.test], dtype=float)
         typer.echo("")
         typer.echo("=== P@k grid, temporal split ===")
@@ -748,6 +757,12 @@ def filmographies(
 def decompose_command(
     token: str = typer.Argument(..., help="Upload token"),
     resamples: int = typer.Option(DECOMPOSITION_RESAMPLES, help="Paired bootstrap resamples"),
+    cut: datetime = typer.Option(
+        TEMPORAL_SPLIT_DATE.isoformat(),
+        formats=["%Y-%m-%d"],
+        help="Temporal split date. The default is the reference account's backfill boundary and is "
+        "wrong for any other library — choose it from the log-date distribution first.",
+    ),
 ) -> None:
     """What explains your taste. Tier 2 — every number carries an interval.
 
@@ -762,7 +777,7 @@ def decompose_command(
             raise typer.Exit(code=1)
         films = load_dataset(session, upload.id)
 
-    for report in decompose(films, resamples=resamples):
+    for report in decompose(films, resamples=resamples, cut=cut.date()):
         typer.echo("")
         typer.echo(f"=== {report.split}   test {report.test_n} films")
         typer.echo(f"  {report.note}")
@@ -808,29 +823,8 @@ def decompose_command(
     )
 
 
-@app.command("portrait")
-def portrait(
-    token: str = typer.Argument(..., help="Upload token"),
-) -> None:
-    """What your library knows about you. Tier 1 only — facts, no estimates.
-
-    Nothing here is a prediction. Four hypotheses about the predictive value of who-made-what were
-    tested and rejected (F70, F72, F73), so this section deliberately contains no modelled claim.
-    """
-    from ariadne.core.catalog.roles import PRODUCT_ROLES
-    from ariadne.core.recommend.portrait import MIN_VOTES_FOR_RESIDUAL, build_portrait
-    from ariadne.core.taste.expectation import fit_rich_expectation
-
-    with session_scope() as session:
-        upload = upload_by_token(session, token)
-        if upload is None:
-            typer.echo(f"no upload with token {token}")
-            raise typer.Exit(code=1)
-
-        films = load_dataset(session, upload.id)
-        expectation = fit_rich_expectation(films)
-        report = build_portrait(films, expectation, PRODUCT_ROLES)
-        names = person_names(session, {loyalty.person_id for loyalty in report.loyalties})
+def _print_portrait(report: Any, names: dict[int, str]) -> None:
+    from ariadne.core.recommend.portrait import MIN_VOTES_FOR_RESIDUAL
 
     typer.echo(f"{report.films} rated films.  Everything below is a count or a direct observation:")
     typer.echo("no estimate, no interval, nothing that could turn out to be a different number.")
@@ -896,6 +890,144 @@ def portrait(
             f"  mean {style.mean:.2f}, spread {style.sd:.2f}, "
             f"{style.top_rating_share * 100:.0f}% of everything you rate is a {5.0:g}"
         )
+
+
+@app.command("portrait")
+def portrait(
+    token: str = typer.Argument(..., help="Upload token"),
+) -> None:
+    """What your library knows about you. Tier 1 only — facts, no estimates.
+
+    Nothing here is a prediction. Four hypotheses about the predictive value of who-made-what were
+    tested and rejected (F70, F72, F73), so this section deliberately contains no modelled claim.
+    """
+    from ariadne.core.catalog.roles import PRODUCT_ROLES
+    from ariadne.core.recommend.portrait import build_portrait
+    from ariadne.core.taste.expectation import fit_rich_expectation
+
+    with session_scope() as session:
+        upload = upload_by_token(session, token)
+        if upload is None:
+            typer.echo(f"no upload with token {token}")
+            raise typer.Exit(code=1)
+
+        films = load_dataset(session, upload.id)
+        expectation = fit_rich_expectation(films)
+        report = build_portrait(films, expectation, PRODUCT_ROLES)
+        names = person_names(session, {loyalty.person_id for loyalty in report.loyalties})
+
+    _print_portrait(report, names)
+
+
+@app.command("analyze")
+def analyze(
+    path: Path = typer.Argument(..., help="Letterboxd export zip or extracted directory"),
+    offline: bool = typer.Option(
+        False, "--offline", help="Skip TMDB entirely — resolve against the local catalog only"
+    ),
+) -> None:
+    """Ingest a Letterboxd export and print everything tier 1 can say about it, in one command.
+
+    Runs ingest, resolve, credits, then the portrait — the same four steps `ingest` / `resolve` /
+    `credits` / `portrait` run separately, chained for a library nobody has tuned anything for.
+
+    Deliberately stops at tier 1. `evaluate` and `decompose` need a temporal cut chosen from this
+    account's own log-date history, before any model has run (D112) — a cut this command guessed
+    would be a cut chosen to flatter whatever it guessed. The month-by-month log-date counts are
+    printed at the end so that choice can be made by looking at the account, not by looking away.
+    """
+    typer.echo(f"=== ingest: {path} ===")
+    started = time.perf_counter()
+    parsed = parse_export(path)
+    stats = parsed.stats
+    typer.echo(
+        f"ratings {stats.ratings}   diary {stats.diary_entries} ({stats.rewatches} rewatches)"
+        f"   likes {stats.likes}"
+    )
+    if stats.diary_films_unmatched:
+        typer.echo(f"diary join unmatched  {stats.diary_films_unmatched}")
+    if not stats.ratings:
+        typer.echo("\nno ratings parsed; refusing to create an empty upload")
+        raise typer.Exit(code=1)
+
+    with session_scope() as session:
+        upload = persist_export(session, parsed)
+        token = upload.token
+    typer.echo(f"upload token   {token}")
+
+    client = None if offline else TmdbClient()
+
+    def resolve_progress(done: int, total: int, resolve_stats: ResolveStats) -> None:
+        if done == total:
+            rate = resolve_stats.resolution_rate * 100
+            typer.echo(
+                f"resolved {resolve_stats.resolved}/{total} ({rate:.1f}%)"
+                f"   television {resolve_stats.television}   unresolved {resolve_stats.failed}"
+            )
+
+    typer.echo("\n=== resolve ===")
+    with session_scope() as session:
+        resolve_upload_row = upload_by_token(session, token)
+        assert resolve_upload_row is not None  # noqa: S101 — just created it above
+        resolve_upload(session, client, resolve_upload_row.id, on_progress=resolve_progress)
+
+    if offline:
+        typer.echo("\n=== credits: skipped (--offline) ===")
+        typer.echo("loyalties and disagreements below will be sparse without TMDB credit data.")
+    else:
+        assert client is not None  # noqa: S101 — only None when offline
+
+        def credits_progress(done: int, total: int, credit_stats: CreditsStats) -> None:
+            if done == total:
+                typer.echo(
+                    f"fetched {credit_stats.fetched}   already held {credit_stats.skipped_cached}"
+                    f"   credits stored {credit_stats.credits_stored}"
+                )
+
+        typer.echo("\n=== credits ===")
+        with session_scope() as session:
+            credits_upload = upload_by_token(session, token)
+            assert credits_upload is not None  # noqa: S101
+            ingest_credits_for_upload(
+                session, client, credits_upload.id, on_progress=credits_progress
+            )
+
+    from ariadne.core.catalog.roles import PRODUCT_ROLES
+    from ariadne.core.recommend.portrait import build_portrait
+    from ariadne.core.taste.expectation import fit_rich_expectation
+
+    typer.echo("\n=== portrait: what your library knows about you ===")
+    typer.echo("tier 1 only — counts and direct observations, no modelled claim (F70, F72, F73)\n")
+    with session_scope() as session:
+        portrait_upload = upload_by_token(session, token)
+        assert portrait_upload is not None  # noqa: S101
+        films = load_dataset(session, portrait_upload.id)
+        expectation = fit_rich_expectation(films)
+        report = build_portrait(films, expectation, PRODUCT_ROLES)
+        names = person_names(session, {loyalty.person_id for loyalty in report.loyalties})
+    _print_portrait(report, names)
+
+    typer.echo(f"\nelapsed   {time.perf_counter() - started:.1f}s")
+    typer.echo(f"upload token   {token}")
+
+    months = Counter(
+        f"{film.logged_date.year}-{film.logged_date.month:02d}"
+        for film in films
+        if film.logged_date
+    )
+    if months:
+        typer.echo("")
+        typer.echo("ratings logged per month, most recent first (pick a cut here, not a score):")
+        for month in sorted(months, reverse=True)[:8]:
+            typer.echo(f"  {month}  {months[month]:>4}  {'#' * (months[month] // 10)}")
+    typer.echo("")
+    typer.echo(
+        "To go further — director/crew effects, and how much of a rating each explains — choose "
+        "a cut date from the histogram above (the month after the last visible backfill burst) "
+        "and run:"
+    )
+    typer.echo(f"  ariadne evaluate {token} --cut YYYY-MM-DD")
+    typer.echo(f"  ariadne decompose {token} --cut YYYY-MM-DD")
 
 
 @app.command("recommend")

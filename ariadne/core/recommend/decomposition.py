@@ -24,9 +24,11 @@ that is the measured result rather than a failure of the display.
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date
 
 import numpy as np
 
+from ariadne.constants import TEMPORAL_SPLIT_DATE
 from ariadne.core.catalog.roles import ACTOR, BELOW_THE_LINE, DIRECTOR
 from ariadne.core.evaluation.baselines import Predictor, _PersonEffects
 from ariadne.core.evaluation.dataset import RatedFilm
@@ -36,7 +38,7 @@ from ariadne.core.evaluation.metrics import (
     Comparison,
     compare,
     precision_at_k,
-    variance_explained,
+    variance_explained_centred,
 )
 from ariadne.core.evaluation.splits import Split, random_split, temporal_split
 from ariadne.core.taste.crew import CrewModel
@@ -180,7 +182,7 @@ def _compare_both(
             base_predicted,
             actual,
             resamples=resamples,
-            metric=variance_explained,
+            metric=variance_explained_centred,
         ),
         ranking=compare(label, predicted, "base", base_predicted, actual, resamples=resamples),
     )
@@ -197,7 +199,7 @@ def decompose_split(split: Split, resamples: int = DECOMPOSITION_RESAMPLES) -> D
         split=split.name,
         note=split.note,
         test_n=len(split.test),
-        base_explained=variance_explained(base_predicted, actual),
+        base_explained=variance_explained_centred(base_predicted, actual),
         base_gate=precision_at_k(base_predicted, actual, GATE_K, GATE_THRESHOLD),
     )
 
@@ -223,10 +225,12 @@ def decompose_split(split: Split, resamples: int = DECOMPOSITION_RESAMPLES) -> D
 
 
 def decompose(
-    films: list[RatedFilm], resamples: int = DECOMPOSITION_RESAMPLES
+    films: list[RatedFilm],
+    resamples: int = DECOMPOSITION_RESAMPLES,
+    cut: date = TEMPORAL_SPLIT_DATE,
 ) -> list[Decomposition]:
     """Both splits, temporal first: it is the honest headline."""
     return [
-        decompose_split(temporal_split(films), resamples),
+        decompose_split(temporal_split(films, cut), resamples),
         decompose_split(random_split(films), resamples),
     ]
